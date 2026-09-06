@@ -60,3 +60,9 @@ Thumbs.db
 # Project scratch / temp
 .tempmediaStorage/
 scratch/
+
+# Presentations & Raw Mockup Assets
+*.pptx
+screen*.png
+screen (*).png
+
