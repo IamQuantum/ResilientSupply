@@ -11,21 +11,38 @@ import {
   Route, 
   ChevronRight 
 } from 'lucide-react';
-import { NavigationTab, WarehouseNode, BusinessProjection } from '../types';
+import { NavigationTab, WarehouseNode, BusinessProjection, DisruptionEvent } from '../types';
 
 interface ScenarioAnalysisProps {
   warehouseNodes: WarehouseNode[];
   projections: BusinessProjection[];
   onNavigate: (tab: NavigationTab) => void;
   onTriggerAgentSim?: () => void;
+  selectedDisruption?: DisruptionEvent;
 }
 
 export const ScenarioAnalysis: React.FC<ScenarioAnalysisProps> = ({
   warehouseNodes,
   projections,
   onNavigate,
-  onTriggerAgentSim
+  onTriggerAgentSim,
+  selectedDisruption
 }) => {
+  const currentDisruption = selectedDisruption || {
+    id: 'D-001',
+    eventType: 'Route Blocked',
+    route: 'R1 (NH-48)',
+    severity: 'Critical',
+    impact: '5 shipments',
+    time: '10:31 AM',
+    affectedRoute: 'R1 (NH-48 Surat-Bharuch Corridor)',
+    affectedShipments: 5,
+    estimatedDelay: '2 Days',
+    stockOutRisk: 72,
+    additionalCost: '₹85K',
+    description: 'Surat-Bharuch arterial transit corridor compromised due to bridge repair and waterlogging.'
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -33,17 +50,17 @@ export const ScenarioAnalysis: React.FC<ScenarioAnalysisProps> = ({
         <div>
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Scenario Analysis</h1>
           <p className="text-sm text-slate-500 mt-1">
-            Understand the operational impact of disruption D-001.
+            Understand operational impact of disruption {currentDisruption.id} on India logistics grid.
           </p>
         </div>
 
         <div className="flex items-center gap-2.5 shrink-0">
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-red-50 border border-red-200 text-red-700 shadow-xs">
             <AlertTriangle className="w-3.5 h-3.5" />
-            Active Incident
+            Active Incident: {currentDisruption.severity}
           </span>
           <span className="px-3 py-1 rounded-full text-xs font-mono font-semibold bg-slate-100 border border-slate-200 text-slate-700">
-            ID: D-001
+            ID: {currentDisruption.id}
           </span>
         </div>
       </div>
@@ -55,11 +72,11 @@ export const ScenarioAnalysis: React.FC<ScenarioAnalysisProps> = ({
             <Route className="w-6 h-6 stroke-[2]" />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-red-700 tracking-tight">
-              ROUTE R1 (NH-48) BLOCKED
+            <h2 className="text-lg font-bold text-red-700 tracking-tight uppercase">
+              {currentDisruption.route}: {currentDisruption.eventType}
             </h2>
             <p className="text-sm text-slate-600 mt-0.5">
-              Surat-Bharuch arterial transit corridor compromised due to bridge repair and waterlogging.
+              {currentDisruption.description}
             </p>
           </div>
         </div>
@@ -67,17 +84,17 @@ export const ScenarioAnalysis: React.FC<ScenarioAnalysisProps> = ({
         <div className="flex items-center gap-6 border-t md:border-t-0 md:border-l border-slate-200 pt-3 md:pt-0 md:pl-6 shrink-0 text-center">
           <div>
             <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">AFFECTED</div>
-            <div className="text-lg font-bold text-slate-900 mt-0.5">5 Shipments</div>
+            <div className="text-lg font-bold text-slate-900 mt-0.5">{currentDisruption.affectedShipments || 5} Shipments</div>
           </div>
           <div className="h-8 w-px bg-slate-200" />
           <div>
             <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">RISK LEVEL</div>
-            <div className="text-lg font-bold text-red-600 mt-0.5">72%</div>
+            <div className="text-lg font-bold text-red-600 mt-0.5">{currentDisruption.stockOutRisk || 72}%</div>
           </div>
           <div className="h-8 w-px bg-slate-200" />
           <div>
             <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">EST. DELAY</div>
-            <div className="text-lg font-bold text-amber-700 mt-0.5">2 Days</div>
+            <div className="text-lg font-bold text-amber-700 mt-0.5">{currentDisruption.estimatedDelay || '2 Days'}</div>
           </div>
         </div>
       </div>
@@ -87,11 +104,11 @@ export const ScenarioAnalysis: React.FC<ScenarioAnalysisProps> = ({
         {/* Delay */}
         <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-xs flex flex-col justify-between">
           <div className="flex items-center justify-between text-slate-500">
-            <span className="text-sm font-semibold text-slate-700">Delay</span>
+            <span className="text-sm font-semibold text-slate-700">Delay Deviation</span>
             <Clock className="w-4 h-4 text-slate-400" />
           </div>
           <div className="my-2">
-            <div className="text-3xl font-extrabold text-slate-900 tracking-tight">+48h</div>
+            <div className="text-3xl font-extrabold text-slate-900 tracking-tight">+{currentDisruption.estimatedDelay || '48h'}</div>
             <div className="text-xs text-red-600 font-medium mt-1 flex items-center gap-1">
               <span>↗ Critical deviation from SLA</span>
             </div>
@@ -101,13 +118,13 @@ export const ScenarioAnalysis: React.FC<ScenarioAnalysisProps> = ({
         {/* Stock-Out % */}
         <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-xs flex flex-col justify-between">
           <div className="flex items-center justify-between text-slate-500">
-            <span className="text-sm font-semibold text-slate-700">Stock-Out %</span>
+            <span className="text-sm font-semibold text-slate-700">Stock-Out Risk</span>
             <Package className="w-4 h-4 text-slate-400" />
           </div>
           <div className="my-2">
-            <div className="text-3xl font-extrabold text-slate-900 tracking-tight">14.5%</div>
+            <div className="text-3xl font-extrabold text-slate-900 tracking-tight">{currentDisruption.stockOutRisk || 72}%</div>
             <div className="text-xs text-amber-600 font-medium mt-1 flex items-center gap-1">
-              <span>⚠ Approaching threshold</span>
+              <span>⚠ Exceeds buffer threshold</span>
             </div>
           </div>
         </div>
@@ -119,7 +136,7 @@ export const ScenarioAnalysis: React.FC<ScenarioAnalysisProps> = ({
             <Banknote className="w-4 h-4 text-slate-400" />
           </div>
           <div className="my-2">
-            <div className="text-3xl font-extrabold text-slate-900 tracking-tight">₹42.5k</div>
+            <div className="text-3xl font-extrabold text-slate-900 tracking-tight">{currentDisruption.additionalCost || '₹85K'}</div>
             <div className="text-xs text-red-600 font-medium mt-1 flex items-center gap-1">
               <span>↗ Estimated penalty & expedite</span>
             </div>
@@ -129,13 +146,13 @@ export const ScenarioAnalysis: React.FC<ScenarioAnalysisProps> = ({
         {/* Affected Customers */}
         <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-xs flex flex-col justify-between">
           <div className="flex items-center justify-between text-slate-500">
-            <span className="text-sm font-semibold text-slate-700">Affected Cust.</span>
+            <span className="text-sm font-semibold text-slate-700">Affected Consignments</span>
             <Users className="w-4 h-4 text-slate-400" />
           </div>
           <div className="my-2">
-            <div className="text-3xl font-extrabold text-slate-900 tracking-tight">3 Tier-1</div>
-            <div className="text-xs text-blue-600 font-medium mt-1 flex items-center gap-1">
-              <span>ⓘ Impacted standing orders</span>
+            <div className="text-3xl font-extrabold text-slate-900 tracking-tight">{currentDisruption.affectedShipments || 5} Active</div>
+            <div className="text-xs text-slate-500 font-medium mt-1 flex items-center gap-1">
+              <span>ⓘ Scheduled on route {currentDisruption.route}</span>
             </div>
           </div>
         </div>
@@ -235,8 +252,8 @@ export const ScenarioAnalysis: React.FC<ScenarioAnalysisProps> = ({
 
       {/* Bottom Status & Action Bar */}
       <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-2.5 text-xs text-blue-700 font-semibold px-3 py-1.5 bg-blue-50/80 rounded-lg border border-blue-100">
-          <span className="w-2 h-2 rounded-full bg-blue-600 animate-pulse" />
+        <div className="flex items-center gap-2.5 text-xs text-slate-700 font-semibold px-3 py-1.5 bg-slate-100 rounded-lg border border-slate-200">
+          <span className="w-2 h-2 rounded-full bg-slate-700 animate-pulse" />
           <span>AI Orchestrator analyzing recovery feasibility...</span>
         </div>
 
@@ -255,9 +272,9 @@ export const ScenarioAnalysis: React.FC<ScenarioAnalysisProps> = ({
                 onNavigate('options');
               }
             }}
-            className="inline-flex items-center gap-2 px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg transition-colors shadow-xs"
+            className="inline-flex items-center gap-2 px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg transition-colors shadow-xs"
           >
-            <Sparkles className="w-3.5 h-3.5" />
+            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
             <span>Generate Recovery Options</span>
           </button>
         </div>

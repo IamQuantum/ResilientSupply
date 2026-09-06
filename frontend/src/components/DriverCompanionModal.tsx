@@ -212,9 +212,12 @@ export const DriverCompanionModal: React.FC<DriverCompanionModalProps> = ({
     });
   };
 
+  const [emergencyErrorMsg, setEmergencyErrorMsg] = useState<string | null>(null);
+
   // Trigger Emergency SOS
   const handleEmergencySOS = async () => {
     setIsSubmittingEmergency(true);
+    setEmergencyErrorMsg(null);
     try {
       const msg = emergencyNotes.trim() || `Driver flagged ${selectedEmergencyType.replace(/_/g, ' ')} at location`;
       await sendDriverEmergency({
@@ -229,7 +232,7 @@ export const DriverCompanionModal: React.FC<DriverCompanionModalProps> = ({
       setEmergencyAlertSent(true);
       if (onEmergencyDispatched) onEmergencyDispatched();
     } catch (err: any) {
-      alert(`Emergency dispatch failed: ${err.message || err}`);
+      setEmergencyErrorMsg(`Emergency dispatch failed: ${err.message || 'Check network connection'}`);
     } finally {
       setIsSubmittingEmergency(false);
     }
@@ -477,6 +480,13 @@ export const DriverCompanionModal: React.FC<DriverCompanionModalProps> = ({
               <div className="p-2.5 bg-emerald-950/70 border border-emerald-800 rounded-lg text-emerald-300 text-xs font-semibold flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4 shrink-0" />
                 <span>SOS Alert Dispatched. Management & agents notified of outage.</span>
+              </div>
+            )}
+
+            {emergencyErrorMsg && (
+              <div className="p-2.5 bg-red-950/80 border border-red-800 rounded-lg text-red-300 text-xs font-semibold flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 shrink-0 text-red-400" />
+                <span>{emergencyErrorMsg}</span>
               </div>
             )}
 

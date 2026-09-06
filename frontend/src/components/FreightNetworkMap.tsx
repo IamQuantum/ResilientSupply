@@ -196,6 +196,7 @@ export const FreightNetworkMap: React.FC<FreightNetworkMapProps> = ({
   const [transportMode, setTransportMode] = useState<'ground' | 'air' | 'multimodal' | 'reefer'>('ground');
   const [isSubmittingRoute, setIsSubmittingRoute] = useState<boolean>(false);
   const [allotmentSuccessMsg, setAllotmentSuccessMsg] = useState<string>('');
+  const [allotmentErrorMsg, setAllotmentErrorMsg] = useState<string>('');
 
   // Resolved Coordinates for Preview
   const [resolvedOrigin, setResolvedOrigin] = useState<PinpointLocation>(() => 
@@ -664,7 +665,7 @@ export const FreightNetworkMap: React.FC<FreightNetworkMapProps> = ({
         setAllotmentSuccessMsg('');
       }, 1400);
     } catch (err: any) {
-      alert(`Failed to allot route: ${err.message || err}`);
+      setAllotmentErrorMsg(`Failed to allot route: ${err.message || 'Check server connection'}`);
     } finally {
       setIsSubmittingRoute(false);
     }
@@ -1050,6 +1051,13 @@ export const FreightNetworkMap: React.FC<FreightNetworkMapProps> = ({
                 <div className="p-2 bg-slate-800 border border-slate-600 rounded text-slate-200 text-xs flex items-center gap-1.5">
                   <Check className="w-3.5 h-3.5 text-emerald-400" />
                   <span>{allotmentSuccessMsg}</span>
+                </div>
+              )}
+
+              {allotmentErrorMsg && (
+                <div className="p-2 bg-red-950/80 border border-red-700 rounded text-red-200 text-xs flex items-center gap-1.5">
+                  <AlertTriangle className="w-3.5 h-3.5 text-red-400 shrink-0" />
+                  <span>{allotmentErrorMsg}</span>
                 </div>
               )}
 

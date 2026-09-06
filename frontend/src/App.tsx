@@ -16,6 +16,7 @@ import { WorkforceModal } from './components/WorkforceModal';
 import { NetworkConfigModal } from './components/NetworkConfigModal';
 import { CustomDisruptionModal } from './components/CustomDisruptionModal';
 import { DriverCompanionModal } from './components/DriverCompanionModal';
+import { HelpSupportModal } from './components/HelpSupportModal';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { 
   NavigationTab, 
@@ -68,8 +69,16 @@ export function App() {
   const [isTelemetryModalOpen, setIsTelemetryModalOpen] = useState<boolean>(false);
   const [isDriverModalOpen, setIsDriverModalOpen] = useState<boolean>(false);
   const [isDispatchModalOpen, setIsDispatchModalOpen] = useState<boolean>(false);
+  const [isHelpModalOpen, setIsHelpModalOpen] = useState<boolean>(false);
+  const [helpModalTab, setHelpModalTab] = useState<'guide' | 'corridors' | 'support'>('guide');
+  const [globalToast, setGlobalToast] = useState<{ message: string; type?: 'info' | 'success' | 'warn' } | null>(null);
   const [dispatchData, setDispatchData] = useState<DispatchBundle | null>(null);
   const [aiRationale, setAiRationale] = useState<string>('');
+
+  const showToast = (message: string, type: 'info' | 'success' | 'warn' = 'info') => {
+    setGlobalToast({ message, type });
+    setTimeout(() => setGlobalToast(null), 4500);
+  };
 
   const fetchNetworkData = async (orgId: string) => {
     try {
@@ -456,7 +465,7 @@ export function App() {
         status: 'rejected'
       }
     ]);
-    alert('Plan has been rejected. Routing back to Scenario Analysis for alternative formulation.');
+    showToast('Plan has been rejected. Routing back to Scenario Analysis for alternative formulation.', 'warn');
     setCurrentTab('analysis');
   };
 
@@ -487,6 +496,14 @@ export function App() {
         currentTab={currentTab}
         onTabChange={setCurrentTab}
         pendingApprovalsCount={pendingApprovalsCount}
+        onOpenHelp={() => {
+          setHelpModalTab('guide');
+          setIsHelpModalOpen(true);
+        }}
+        onOpenSupport={() => {
+          setHelpModalTab('support');
+          setIsHelpModalOpen(true);
+        }}
       />
 
       {/* Main Content Area */}
@@ -569,6 +586,7 @@ export function App() {
                   projections={businessProjections}
                   onNavigate={setCurrentTab}
                   onTriggerAgentSim={handleTriggerAgentPipeline}
+                  selectedDisruption={selectedDisruption}
                 />
               </ErrorBoundary>
             )}
@@ -604,6 +622,8 @@ export function App() {
                   canModifyBuffer={userPermissions.canModifyBuffer}
                   canDispatchEway={userPermissions.canDispatchEway}
                   roleTitle={currentUser.roleTitle}
+                  selectedDisruption={selectedDisruption}
+                  selectedStrategyId={selectedStrategyId}
                 />
               </ErrorBoundary>
             )}
@@ -690,6 +710,29 @@ export function App() {
           if (activeOrg) fetchNetworkData(activeOrg.id);
         }}
       />
+
+      {/* Platform Architecture Reference & Support Modal */}
+      <HelpSupportModal
+        isOpen={isHelpModalOpen}
+        onClose={() => setIsHelpModalOpen(false)}
+        defaultTab={helpModalTab}
+      />
+
+      {/* Sleek Global Toast Notification */}
+      {globalToast && (
+        <div className={`fixed bottom-6 right-8 z-50 px-4 py-3 rounded-xl shadow-xl flex items-center gap-3 border text-xs font-semibold animate-in fade-in slide-in-from-bottom-3 duration-200 ${
+          globalToast.type === 'warn'
+            ? 'bg-slate-900 border-amber-500 text-amber-200'
+            : globalToast.type === 'success'
+            ? 'bg-slate-900 border-emerald-500 text-emerald-200'
+            : 'bg-slate-900 border-slate-700 text-slate-200'
+        }`}>
+          <span className={`w-2 h-2 rounded-full ${
+            globalToast.type === 'warn' ? 'bg-amber-400' : globalToast.type === 'success' ? 'bg-emerald-400' : 'bg-slate-400'
+          }`} />
+          <span>{globalToast.message}</span>
+        </div>
+      )}
     </div>
   );
 }

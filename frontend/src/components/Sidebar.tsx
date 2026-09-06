@@ -17,12 +17,16 @@ interface SidebarProps {
   currentTab: NavigationTab;
   onTabChange: (tab: NavigationTab) => void;
   pendingApprovalsCount?: number;
+  onOpenHelp?: () => void;
+  onOpenSupport?: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
   currentTab,
   onTabChange,
-  pendingApprovalsCount = 1
+  pendingApprovalsCount = 1,
+  onOpenHelp,
+  onOpenSupport
 }) => {
   const navItems = [
     { id: 'control-center' as NavigationTab, label: 'Control Center', icon: LayoutGrid },
@@ -95,14 +99,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Footer Support Links */}
       <div className="p-4 border-t border-slate-100 space-y-1">
         <button 
-          onClick={() => alert('ResilientChain AI Documentation & Knowledge Base')}
+          onClick={onOpenHelp}
           className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors"
         >
           <HelpCircle className="w-4 h-4 text-slate-500" />
           <span>Help</span>
         </button>
         <button 
-          onClick={() => alert('24/7 Supply Chain Incident Response Hotline')}
+          onClick={onOpenSupport}
           className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors"
         >
           <Headphones className="w-4 h-4 text-slate-500" />

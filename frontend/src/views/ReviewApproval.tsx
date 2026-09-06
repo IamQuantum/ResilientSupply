@@ -15,7 +15,7 @@ import {
   FileText,
   Lock
 } from 'lucide-react';
-import { ComplianceCheck, AuditTrailEvent, NavigationTab } from '../types';
+import { ComplianceCheck, AuditTrailEvent, NavigationTab, DisruptionEvent } from '../types';
 import { ModifyPlanModal } from '../components/ModifyPlanModal';
 
 interface ReviewApprovalProps {
@@ -32,6 +32,8 @@ interface ReviewApprovalProps {
   canModifyBuffer?: boolean;
   canDispatchEway?: boolean;
   roleTitle?: string;
+  selectedDisruption?: DisruptionEvent;
+  selectedStrategyId?: string;
 }
 
 export const ReviewApproval: React.FC<ReviewApprovalProps> = ({
@@ -47,16 +49,19 @@ export const ReviewApproval: React.FC<ReviewApprovalProps> = ({
   canApprove = true,
   canModifyBuffer = true,
   canDispatchEway = true,
-  roleTitle = 'Executive Lead'
+  roleTitle = 'Executive Lead',
+  selectedDisruption,
+  selectedStrategyId = 'strat-b'
 }) => {
+  const strategyCode = selectedStrategyId.replace('strat-', '').toUpperCase();
   const [showSuccessToast, setShowSuccessToast] = useState(false);
-  const [toastMessage, setToastMessage] = useState('Strategy B Approved & Executed! Carrier booking committed to SQLite.');
+  const [toastMessage, setToastMessage] = useState(`Strategy ${strategyCode} Approved & Executed! Carrier booking committed to SQLite.`);
   const [isModifyModalOpen, setIsModifyModalOpen] = useState(false);
   const [activeCarrier, setActiveCarrier] = useState('Dedicated R3 Reefer Fleet');
 
   const handleApproveClick = () => {
     onApprove();
-    setToastMessage('Strategy B Approved & Executed! Carrier booking committed to SQLite database.');
+    setToastMessage(`Strategy ${strategyCode} Approved & Executed! Carrier booking committed to SQLite database.`);
     setShowSuccessToast(true);
     setTimeout(() => setShowSuccessToast(false), 5000);
   };
@@ -125,7 +130,7 @@ export const ReviewApproval: React.FC<ReviewApprovalProps> = ({
           High-Impact Action Required
         </span>
         <span className="px-3 py-1 rounded-full text-xs font-mono font-semibold bg-slate-100 border border-slate-200 text-slate-700">
-          Disruption ID: D-001 (NH-48 Surat Corridor)
+          Disruption ID: {selectedDisruption?.id || 'D-001'} ({selectedDisruption?.affectedRoute || selectedDisruption?.route || 'NH-48 Corridor'})
         </span>
         <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
           <Database className="w-3 h-3" />
@@ -137,10 +142,10 @@ export const ReviewApproval: React.FC<ReviewApprovalProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
-            Review Recovery Strategy B
+            Review Recovery Strategy {strategyCode}
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            AI Agent orchestrator requests approval for critical Indian Western logistics re-routing.
+            AI Agent orchestrator requests approval for critical logistics re-routing on {selectedDisruption?.route || 'active corridor'}.
           </p>
         </div>
 
