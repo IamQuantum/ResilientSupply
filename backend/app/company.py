@@ -475,6 +475,101 @@ class CompanyEngine:
         db.commit()
         return {"status": "success", "routeId": route_id}
 
+    def update_node(
+        self,
+        db: Session,
+        node_id: str,
+        name: Optional[str] = None,
+        city: Optional[str] = None,
+        pincode: Optional[str] = None,
+        capacity: Optional[int] = None,
+        safety_buffer: Optional[int] = None,
+        status: Optional[str] = None,
+        address: Optional[str] = None,
+        lat: Optional[float] = None,
+        lng: Optional[float] = None
+    ) -> Dict[str, Any]:
+        node = db.query(UserSupplyChainNode).filter(UserSupplyChainNode.id == node_id).first()
+        if not node:
+            return {"status": "error", "message": f"Node '{node_id}' not found."}
+        if name is not None:
+            node.name = name
+        if city is not None:
+            node.city = city
+        if pincode is not None:
+            node.pincode = pincode
+        if capacity is not None:
+            node.capacity_units = capacity
+        if safety_buffer is not None:
+            node.safety_buffer_pct = safety_buffer
+        if status is not None:
+            node.status = status
+        if address is not None:
+            node.address = address
+        if lat is not None:
+            node.lat = lat
+        if lng is not None:
+            node.lng = lng
+        db.commit()
+        return {"status": "success", "nodeId": node_id}
+
+    def delete_node(self, db: Session, node_id: str) -> Dict[str, Any]:
+        node = db.query(UserSupplyChainNode).filter(UserSupplyChainNode.id == node_id).first()
+        if not node:
+            return {"status": "error", "message": f"Node '{node_id}' not found."}
+        db.delete(node)
+        db.commit()
+        return {"status": "success", "deletedNodeId": node_id}
+
+    def update_route(
+        self,
+        db: Session,
+        route_id: str,
+        route_code: Optional[str] = None,
+        origin: Optional[str] = None,
+        destination: Optional[str] = None,
+        transit_hours: Optional[int] = None,
+        carrier: Optional[str] = None,
+        origin_address: Optional[str] = None,
+        destination_address: Optional[str] = None,
+        distance_km: Optional[int] = None,
+        waypoints: Optional[str] = None,
+        status: Optional[str] = None
+    ) -> Dict[str, Any]:
+        route = db.query(UserSupplyChainRoute).filter(UserSupplyChainRoute.id == route_id).first()
+        if not route:
+            return {"status": "error", "message": f"Route '{route_id}' not found."}
+        if route_code is not None:
+            route.route_code = route_code
+        if origin is not None:
+            route.origin_node = origin
+        if destination is not None:
+            route.destination_node = destination
+        if transit_hours is not None:
+            route.transit_hours = transit_hours
+        if carrier is not None:
+            route.primary_carrier = carrier
+        if origin_address is not None:
+            route.origin_address = origin_address
+        if destination_address is not None:
+            route.destination_address = destination_address
+        if distance_km is not None:
+            route.distance_km = distance_km
+        if waypoints is not None:
+            route.waypoints = waypoints
+        if status is not None:
+            route.status = status
+        db.commit()
+        return {"status": "success", "routeId": route_id}
+
+    def delete_route(self, db: Session, route_id: str) -> Dict[str, Any]:
+        route = db.query(UserSupplyChainRoute).filter(UserSupplyChainRoute.id == route_id).first()
+        if not route:
+            return {"status": "error", "message": f"Route '{route_id}' not found."}
+        db.delete(route)
+        db.commit()
+        return {"status": "success", "deletedRouteId": route_id}
+
     def get_all_organizations(self, db: Session) -> List[Dict[str, Any]]:
         self.seed_demo_if_empty(db)
         orgs = db.query(Organization).filter(Organization.is_active == True).all()

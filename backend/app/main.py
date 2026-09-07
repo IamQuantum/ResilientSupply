@@ -419,6 +419,30 @@ class AddRouteRequest(BaseModel):
     distanceKm: Optional[int] = None
     waypoints: Optional[str] = None
 
+class UpdateNodeRequest(BaseModel):
+    name: Optional[str] = None
+    city: Optional[str] = None
+    pincode: Optional[str] = None
+    capacity: Optional[int] = None
+    safetyBuffer: Optional[int] = None
+    status: Optional[str] = None
+    address: Optional[str] = None
+    lat: Optional[float] = None
+    lng: Optional[float] = None
+
+class UpdateRouteRequest(BaseModel):
+    routeCode: Optional[str] = None
+    origin: Optional[str] = None
+    destination: Optional[str] = None
+    transitHours: Optional[int] = None
+    carrier: Optional[str] = None
+    originAddress: Optional[str] = None
+    destinationAddress: Optional[str] = None
+    distanceKm: Optional[int] = None
+    waypoints: Optional[str] = None
+    status: Optional[str] = None
+
+
 # --- Phase 3 Enterprise Dispatch Endpoints ---
 @app.post("/api/dispatch/generate")
 def generate_dispatch(req: EWayBillRequest, db: Session = Depends(get_db)):
@@ -552,6 +576,60 @@ def add_company_route(req: AddRouteRequest, db: Session = Depends(get_db)):
         distance_km=req.distanceKm,
         waypoints=req.waypoints
     )
+
+@app.put("/api/network/nodes/{node_id}")
+def update_company_node(node_id: str, req: UpdateNodeRequest, db: Session = Depends(get_db)):
+    res = company_engine.update_node(
+        db=db,
+        node_id=node_id,
+        name=req.name,
+        city=req.city,
+        pincode=req.pincode,
+        capacity=req.capacity,
+        safety_buffer=req.safetyBuffer,
+        status=req.status,
+        address=req.address,
+        lat=req.lat,
+        lng=req.lng
+    )
+    if res.get("status") == "error":
+        raise HTTPException(status_code=404, detail=res.get("message"))
+    return res
+
+@app.delete("/api/network/nodes/{node_id}")
+def delete_company_node(node_id: str, db: Session = Depends(get_db)):
+    res = company_engine.delete_node(db=db, node_id=node_id)
+    if res.get("status") == "error":
+        raise HTTPException(status_code=404, detail=res.get("message"))
+    return res
+
+@app.put("/api/network/routes/{route_id}")
+def update_company_route(route_id: str, req: UpdateRouteRequest, db: Session = Depends(get_db)):
+    res = company_engine.update_route(
+        db=db,
+        route_id=route_id,
+        route_code=req.routeCode,
+        origin=req.origin,
+        destination=req.destination,
+        transit_hours=req.transitHours,
+        carrier=req.carrier,
+        origin_address=req.originAddress,
+        destination_address=req.destinationAddress,
+        distance_km=req.distanceKm,
+        waypoints=req.waypoints,
+        status=req.status
+    )
+    if res.get("status") == "error":
+        raise HTTPException(status_code=404, detail=res.get("message"))
+    return res
+
+@app.delete("/api/network/routes/{route_id}")
+def delete_company_route(route_id: str, db: Session = Depends(get_db)):
+    res = company_engine.delete_route(db=db, route_id=route_id)
+    if res.get("status") == "error":
+        raise HTTPException(status_code=404, detail=res.get("message"))
+    return res
+
 
 class TelemetrySimRequest(BaseModel):
     eventType: str = "FLASH_FLOOD" # FLASH_FLOOD | REEFER_EXCURSION | RECOVER_NH48

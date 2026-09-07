@@ -158,6 +158,83 @@ export async function addCompanyNode(payload: {
   }
 }
 
+export async function updateCompanyNode(nodeId: string, payload: {
+  name?: string;
+  city?: string;
+  pincode?: string;
+  capacity?: number;
+  safetyBuffer?: number;
+  status?: string;
+  address?: string;
+  lat?: number;
+  lng?: number;
+}) {
+  try {
+    const res = await fetch(`${API_BASE}/network/nodes/${nodeId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) throw new Error('Failed to update company node');
+    return await res.json();
+  } catch (err) {
+    console.error('Update node error:', err);
+    throw err;
+  }
+}
+
+export async function deleteCompanyNode(nodeId: string) {
+  try {
+    const res = await fetch(`${API_BASE}/network/nodes/${nodeId}`, {
+      method: 'DELETE'
+    });
+    if (!res.ok) throw new Error('Failed to delete company node');
+    return await res.json();
+  } catch (err) {
+    console.error('Delete node error:', err);
+    throw err;
+  }
+}
+
+export async function updateCompanyRoute(routeId: string, payload: {
+  routeCode?: string;
+  origin?: string;
+  destination?: string;
+  transitHours?: number;
+  carrier?: string;
+  originAddress?: string;
+  destinationAddress?: string;
+  distanceKm?: number;
+  waypoints?: string;
+  status?: string;
+}) {
+  try {
+    const res = await fetch(`${API_BASE}/network/routes/${routeId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) throw new Error('Failed to update company route');
+    return await res.json();
+  } catch (err) {
+    console.error('Update route error:', err);
+    throw err;
+  }
+}
+
+export async function deleteCompanyRoute(routeId: string) {
+  try {
+    const res = await fetch(`${API_BASE}/network/routes/${routeId}`, {
+      method: 'DELETE'
+    });
+    if (!res.ok) throw new Error('Failed to delete company route');
+    return await res.json();
+  } catch (err) {
+    console.error('Delete route error:', err);
+    throw err;
+  }
+}
+
 export async function fetchFleetTelematics() {
   try {
     const res = await fetch(`${API_BASE}/telemetry/fleet`);
