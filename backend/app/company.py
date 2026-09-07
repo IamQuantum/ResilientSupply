@@ -37,13 +37,13 @@ class CompanyEngine:
             db.commit()
 
         # Check if demo user exists
-        demo_user = db.query(User).filter(User.email == "demo@tatamotors.com").first()
+        demo_user = db.query(User).filter(User.id == "usr-demo-01").first()
         if not demo_user:
             demo_user = User(
                 id="usr-demo-01",
                 org_id=DEMO_ORG_ID,
-                name="Vikramaditya Kulkarni",
-                email="demo@tatamotors.com",
+                name="Aditya",
+                email="aditya@tatamotors.com",
                 password_hash=hash_pw("demo123"),
                 role_title="VP Global Supply Chain",
                 department="Executive Supply Chain",
@@ -51,13 +51,21 @@ class CompanyEngine:
                 status="ONLINE"
             )
             db.add(demo_user)
+            db.commit()
+        else:
+            if demo_user.name != "Aditya":
+                demo_user.name = "Aditya"
+                demo_user.email = "aditya@tatamotors.com"
+                db.commit()
 
-            # Demo Team Member
+        # Demo Team Member
+        demo_user2 = db.query(User).filter(User.id == "usr-demo-02").first()
+        if not demo_user2:
             demo_user2 = User(
                 id="usr-demo-02",
                 org_id=DEMO_ORG_ID,
-                name="Priya Deshmukh",
-                email="p.deshmukh@tatamotors.com",
+                name="Pranath",
+                email="pranath@tatamotors.com",
                 password_hash=hash_pw("demo123"),
                 role_title="Senior Logistics Planner",
                 department="Corridor Logistics",
@@ -65,8 +73,15 @@ class CompanyEngine:
                 status="ONLINE"
             )
             db.add(demo_user2)
+            db.commit()
+        else:
+            if demo_user2.name != "Pranath":
+                demo_user2.name = "Pranath"
+                demo_user2.email = "pranath@tatamotors.com"
+                db.commit()
 
-            # Predefined Demo Roles
+        # Predefined Demo Roles if missing
+        if not db.query(CustomRole).filter(CustomRole.org_id == DEMO_ORG_ID).first():
             roles = [
                 CustomRole(
                     id="role-demo-01",
@@ -93,8 +108,10 @@ class CompanyEngine:
             ]
             for r in roles:
                 db.add(r)
+            db.commit()
 
-            # Benchmark Supply Chain Nodes
+        # Benchmark Supply Chain Nodes if missing
+        if not db.query(UserSupplyChainNode).filter(UserSupplyChainNode.org_id == DEMO_ORG_ID).first():
             demo_nodes = [
                 UserSupplyChainNode(id="node-w1", org_id=DEMO_ORG_ID, name="Bhiwandi Central DC", city="Mumbai Bhiwandi", pincode="421302", capacity_units=12000, safety_buffer_pct=25, status="Available"),
                 UserSupplyChainNode(id="node-w2", org_id=DEMO_ORG_ID, name="Pune Chakan DC", city="Pune Chakan", pincode="410501", capacity_units=8500, safety_buffer_pct=40, status="Available"),
@@ -103,7 +120,6 @@ class CompanyEngine:
             ]
             for n in demo_nodes:
                 db.add(n)
-
             db.commit()
 
     def authenticate_user(self, db: Session, email: str, password: Optional[str] = None) -> Optional[Dict[str, Any]]:
@@ -111,8 +127,10 @@ class CompanyEngine:
         user = db.query(User).filter(User.email.ilike(email.strip())).first()
         if not user:
             # If demo email shortcut
-            if email == "demo@tatamotors.com":
+            if email in ["demo@tatamotors.com", "aditya@tatamotors.com"]:
                 user = db.query(User).filter(User.id == "usr-demo-01").first()
+            elif email in ["pranath@tatamotors.com", "p.deshmukh@tatamotors.com"]:
+                user = db.query(User).filter(User.id == "usr-demo-02").first()
             else:
                 return None
 

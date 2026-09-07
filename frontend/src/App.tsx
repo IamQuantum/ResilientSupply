@@ -185,6 +185,14 @@ export function App() {
       try {
         const parsed: AuthResponse = JSON.parse(saved);
         if (parsed && parsed.user && parsed.organization) {
+          if (parsed.user.id === 'usr-demo-01' || parsed.user.name === 'Vikramaditya Kulkarni') {
+            parsed.user.name = 'Aditya';
+            parsed.user.email = 'aditya@tatamotors.com';
+          } else if (parsed.user.id === 'usr-demo-02' || parsed.user.name === 'Priya Deshmukh') {
+            parsed.user.name = 'Pranath';
+            parsed.user.email = 'pranath@tatamotors.com';
+          }
+          localStorage.setItem('resilient_chain_auth', JSON.stringify(parsed));
           setCurrentUser(parsed.user);
           setActiveOrg(parsed.organization);
           setUserRoles(parsed.roles || []);

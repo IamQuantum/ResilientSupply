@@ -341,7 +341,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ onLoginSuccess }) => {
                 Tata Motors CV (Western Corridor Benchmark)
               </div>
               <p className="text-[11px] text-slate-500 leading-snug">
-                Pre-configured with the NH-48 Surat disruption, OR-Tools multi-agent solver, IMD radar, and GST e-Way Bill.
+                Pre-configured with Aditya (VP Supply Chain) &amp; Pranath (Logistics Planner), NH-48 Surat disruption, and OR-Tools multi-agent solver.
               </p>
               <button
                 type="button"
