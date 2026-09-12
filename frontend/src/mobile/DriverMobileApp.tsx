@@ -38,7 +38,12 @@ import {
   ExternalLink,
   Laptop,
   RotateCcw,
-  Volume2
+  Volume2,
+  VolumeX,
+  Mic,
+  MicOff,
+  Download,
+  Globe
 } from 'lucide-react';
 import QRCode from 'qrcode';
 import L from 'leaflet';
@@ -142,12 +147,151 @@ export const DriverMobileApp: React.FC<DriverMobileAppProps> = ({
   const [isSubmittingEmergency, setIsSubmittingEmergency] = useState<boolean>(false);
   const [emergencyAlertSent, setEmergencyAlertSent] = useState<boolean>(false);
 
+  // Voice Guidance (Hindi & English) State
+  const [isVoiceGuidanceEnabled, setIsVoiceGuidanceEnabled] = useState<boolean>(true);
+  const [voiceLanguage, setVoiceLanguage] = useState<'hi' | 'en'>('hi');
+
+  // Speech-to-Text Dictation State
+  const [isListeningDispatch, setIsListeningDispatch] = useState<boolean>(false);
+  const [isListeningEmergency, setIsListeningEmergency] = useState<boolean>(false);
+  const recognitionRef = useRef<any>(null);
+
+  // Offline Dead-Zone & PWA State
+  const [isOffline, setIsOffline] = useState<boolean>(typeof navigator !== 'undefined' ? !navigator.onLine : false);
+  const [deferredInstallPrompt, setDeferredInstallPrompt] = useState<any>(null);
+  const [isAppInstalled, setIsAppInstalled] = useState<boolean>(false);
+
   // Leaflet Map Ref
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markerRef = useRef<L.Marker | null>(null);
   const polylineRef = useRef<L.Polyline | null>(null);
   const hazardMarkerRef = useRef<L.Marker | null>(null);
+
+  // Audio Speech Synthesis Helper (Supports Hindi & English)
+  const speakGuidance = (textEn: string, textHi: string) => {
+    if (!isVoiceGuidanceEnabled || typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+    try {
+      window.speechSynthesis.cancel();
+      const isHindi = voiceLanguage === 'hi';
+      const utterance = new SpeechSynthesisUtterance(isHindi ? textHi : textEn);
+      utterance.lang = isHindi ? 'hi-IN' : 'en-IN';
+      utterance.rate = 0.92;
+      utterance.pitch = 1.0;
+
+      const voices = window.speechSynthesis.getVoices();
+      const matchedVoice = voices.find(v => isHindi
+        ? (v.lang.includes('hi') || v.name.toLowerCase().includes('hindi'))
+        : (v.lang.includes('en-IN') || v.lang.includes('en'))
+      );
+      if (matchedVoice) utterance.voice = matchedVoice;
+
+      window.speechSynthesis.speak(utterance);
+    } catch (err) {
+      console.warn('Speech synthesis warning:', err);
+    }
+  };
+
+  // Web Speech API: Speech-to-Text for Hands-Free Driving
+  const startSpeechToText = (target: 'dispatch' | 'emergency') => {
+    const SpeechRec = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRec) {
+      alert('Speech recognition is not supported on this browser. You can type notes manually.');
+      return;
+    }
+
+    if (recognitionRef.current) {
+      try { recognitionRef.current.stop(); } catch (e) {}
+    }
+
+    const recognition = new SpeechRec();
+    recognitionRef.current = recognition;
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = voiceLanguage === 'hi' ? 'hi-IN' : 'en-IN';
+
+    if (target === 'dispatch') {
+      setIsListeningDispatch(true);
+    } else {
+      setIsListeningEmergency(true);
+    }
+
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript;
+      if (target === 'dispatch') {
+        setNewMessageText(prev => prev ? `${prev} ${transcript}` : transcript);
+      } else {
+        setEmergencyNotes(prev => prev ? `${prev} ${transcript}` : transcript);
+      }
+    };
+
+    recognition.onerror = (e: any) => {
+      console.warn('Speech recognition error:', e.error);
+      setIsListeningDispatch(false);
+      setIsListeningEmergency(false);
+    };
+
+    recognition.onend = () => {
+      setIsListeningDispatch(false);
+      setIsListeningEmergency(false);
+    };
+
+    try {
+      recognition.start();
+    } catch (e) {
+      console.warn('Speech start error:', e);
+      setIsListeningDispatch(false);
+      setIsListeningEmergency(false);
+    }
+  };
+
+  const stopSpeechToText = () => {
+    if (recognitionRef.current) {
+      try { recognitionRef.current.stop(); } catch (e) {}
+    }
+    setIsListeningDispatch(false);
+    setIsListeningEmergency(false);
+  };
+
+  // Online / Offline Dead-Zone Listeners
+  useEffect(() => {
+    const handleOnline = () => setIsOffline(false);
+    const handleOffline = () => setIsOffline(true);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  // PWA Install Prompt Listener
+  useEffect(() => {
+    const handleBeforeInstall = (e: any) => {
+      e.preventDefault();
+      setDeferredInstallPrompt(e);
+    };
+    const handleAppInstalled = () => {
+      setIsAppInstalled(true);
+      setDeferredInstallPrompt(null);
+    };
+    window.addEventListener('beforeinstallprompt', handleBeforeInstall);
+    window.addEventListener('appinstalled', handleAppInstalled);
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
+      window.removeEventListener('appinstalled', handleAppInstalled);
+    };
+  }, []);
+
+  const handleInstallPwa = async () => {
+    if (!deferredInstallPrompt) return;
+    deferredInstallPrompt.prompt();
+    const choiceResult = await deferredInstallPrompt.userChoice;
+    if (choiceResult && choiceResult.outcome === 'accepted') {
+      setIsAppInstalled(true);
+    }
+    setDeferredInstallPrompt(null);
+  };
 
   // Standard corridor waypoints: Pune -> Bhiwandi -> Surat -> Bharuch -> Vadodara -> Ahmedabad -> Jaipur -> Delhi
   const standardCorridorCoords: [number, number][] = [
@@ -228,6 +372,10 @@ export const DriverMobileApp: React.FC<DriverMobileAppProps> = ({
             if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
               navigator.vibrate([300, 100, 300, 100, 400]);
             }
+            speakGuidance(
+              "Attention driver: HQ has approved a detour via State Highway 188 to bypass Narmada bridge flooding. Please review and accept the detour.",
+              "Dhyan dein: Baadh ke karan HQ ne State Highway 188 se naya detour rasta manzoor kiya hai. Kripya naye raste ki pushti karein."
+            );
             setHasVibratedForReroute(true);
           }
         } else {
@@ -284,6 +432,10 @@ export const DriverMobileApp: React.FC<DriverMobileAppProps> = ({
       if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
         navigator.vibrate([200, 100, 200]);
       }
+      speakGuidance(
+        "Detour via State Highway 188 activated. GPS navigation updated.",
+        "SH-188 detour rasta lagu ho gaya hai. GPS navigation update kar di gayi hai."
+      );
       setRerouteSuccessToast('Detour via SH-188 Activated. GPS Navigation Updated.');
       setTimeout(() => setRerouteSuccessToast(null), 4000);
       setRerouteAlertDismissed(true);
@@ -670,17 +822,92 @@ export const DriverMobileApp: React.FC<DriverMobileAppProps> = ({
             <span>{batteryPct}%</span>
           </div>
 
+          {/* Voice Guidance Toggle */}
+          <button
+            type="button"
+            onClick={() => {
+              const next = !isVoiceGuidanceEnabled;
+              setIsVoiceGuidanceEnabled(next);
+              if (next) {
+                speakGuidance("Voice guidance active.", "Aawaaz sahayata shuru ki gayi hai.");
+              }
+            }}
+            className={`p-1 rounded-md border transition-colors ${
+              isVoiceGuidanceEnabled 
+                ? 'bg-emerald-950/80 border-emerald-800 text-emerald-400 hover:bg-emerald-900' 
+                : 'bg-slate-900 border-slate-800 text-slate-500 hover:text-slate-400'
+            }`}
+            title={isVoiceGuidanceEnabled ? 'Voice Guidance Active' : 'Voice Guidance Muted'}
+          >
+            {isVoiceGuidanceEnabled ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />}
+          </button>
+
+          {/* Hindi / English Language Pill */}
+          <button
+            type="button"
+            onClick={() => {
+              const nextLang = voiceLanguage === 'hi' ? 'en' : 'hi';
+              setVoiceLanguage(nextLang);
+              speakGuidance(
+                "Switched to English voice assistance.",
+                "Hindi aawaaz sahayata chuni gayi hai."
+              );
+            }}
+            className="px-1.5 py-0.5 rounded-md bg-slate-900 border border-slate-800 text-[10px] font-bold text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
+            title="Switch between Hindi and English"
+          >
+            {voiceLanguage === 'hi' ? '🇮🇳 HI' : '🇬🇧 EN'}
+          </button>
+
           {onSwitchToDesktop && (
             <button
               onClick={onSwitchToDesktop}
               title="Switch to HQ Desktop Console"
-              className="ml-1 p-1 rounded-md bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white transition-colors border border-slate-800"
+              className="ml-0.5 p-1 rounded-md bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white transition-colors border border-slate-800"
             >
               <Laptop className="w-3.5 h-3.5" />
             </button>
           )}
         </div>
       </div>
+
+      {/* OFFLINE CELLULAR DEAD-ZONE BANNER */}
+      {isOffline && (
+        <div className="bg-amber-950/95 border-b border-amber-800 px-3.5 py-2 flex items-center justify-between text-xs text-amber-200 animate-in slide-in-from-top-1">
+          <div className="flex items-center gap-2">
+            <WifiOff className="w-4 h-4 text-amber-400 shrink-0" />
+            <div>
+              <div className="font-bold text-[11px] leading-tight">Cellular Dead Zone Active</div>
+              <div className="text-[10px] text-amber-300/80">Offline e-Way Pass & Corridor Route cached in PWA storage</div>
+            </div>
+          </div>
+          <span className="text-[9px] bg-amber-900 text-amber-200 font-mono font-bold px-2 py-0.5 rounded-full border border-amber-700">
+            OFFLINE PWA
+          </span>
+        </div>
+      )}
+
+      {/* PWA INSTALL PROMPT CARD */}
+      {deferredInstallPrompt && !isAppInstalled && (
+        <div className="mx-3 mt-2 p-2.5 bg-slate-900 border border-emerald-800/80 rounded-2xl flex items-center justify-between shadow-lg">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-emerald-950 text-emerald-400 flex items-center justify-center">
+              <Download className="w-4 h-4" />
+            </div>
+            <div>
+              <div className="text-xs font-bold text-white leading-tight">Install Driver Companion App</div>
+              <div className="text-[10px] text-slate-400">Save to home screen for offline dead-zone access</div>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={handleInstallPwa}
+            className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-xs transition-colors"
+          >
+            Install PWA
+          </button>
+        </div>
+      )}
 
       {/* 2. DRIVER & VEHICLE IDENTITY BAR */}
       <div className="bg-slate-900 px-4 py-2.5 border-b border-slate-800/80 flex items-center justify-between">
@@ -808,9 +1035,31 @@ export const DriverMobileApp: React.FC<DriverMobileAppProps> = ({
                   </div>
                 </div>
               </div>
-              <div className="text-right shrink-0">
-                <div className="text-xs font-bold text-white font-mono">{tripData?.remainingKm || 840} km</div>
-                <div className="text-[10px] text-slate-400">ETA: {tripData?.eta || '08:30 AM'}</div>
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (isDetourActive) {
+                      speakGuidance(
+                        "In 4.2 km, continue on State Highway 188 detour toward Ankleshwar ring bypass.",
+                        "Aage 4.2 kilometer chalkar State Highway 188 detour se Ankleshwar bypass ki taraf chalein."
+                      );
+                    } else {
+                      speakGuidance(
+                        tripData?.nextManoeuvre || 'In 4.2 km, continue on NH48 toward Bharuch bypass',
+                        'Aage 4.2 kilometer tak NH-48 par Bharuch bypass ki taraf chalte rahein'
+                      );
+                    }
+                  }}
+                  className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-emerald-400 border border-slate-700 transition-colors"
+                  title="Read aloud maneuver instruction"
+                >
+                  <Volume2 className="w-4 h-4 text-emerald-400" />
+                </button>
+                <div className="text-right">
+                  <div className="text-xs font-bold text-white font-mono">{tripData?.remainingKm || 840} km</div>
+                  <div className="text-[10px] text-slate-400">ETA: {tripData?.eta || '08:30 AM'}</div>
+                </div>
               </div>
             </div>
 
@@ -1305,15 +1554,31 @@ export const DriverMobileApp: React.FC<DriverMobileAppProps> = ({
                 ))}
               </div>
 
-              {/* Message Input Bar */}
+              {/* Message Input Bar with Voice-to-Text */}
               <form onSubmit={handleSendMessage} className="flex gap-2 pt-1">
                 <input
                   type="text"
                   value={newMessageText}
                   onChange={(e) => setNewMessageText(e.target.value)}
-                  placeholder="Message HQ Dispatch..."
-                  className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-slate-600"
+                  placeholder={isListeningDispatch ? "Listening... Speak now" : "Message HQ Dispatch..."}
+                  className={`flex-1 bg-slate-950 border rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none transition-colors ${
+                    isListeningDispatch ? 'border-rose-500 ring-2 ring-rose-500/40' : 'border-slate-800 focus:border-slate-600'
+                  }`}
                 />
+
+                <button
+                  type="button"
+                  onClick={isListeningDispatch ? stopSpeechToText : () => startSpeechToText('dispatch')}
+                  className={`p-2 rounded-xl border transition-all flex items-center justify-center ${
+                    isListeningDispatch 
+                      ? 'bg-rose-600 text-white border-rose-500 animate-pulse ring-2 ring-rose-400/50 shadow-md' 
+                      : 'bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700'
+                  }`}
+                  title={isListeningDispatch ? "Stop Listening" : "Voice Dictate Message"}
+                >
+                  {isListeningDispatch ? <MicOff className="w-3.5 h-3.5" /> : <Mic className="w-3.5 h-3.5" />}
+                </button>
+
                 <button
                   type="submit"
                   disabled={isSendingMessage || !newMessageText.trim()}
@@ -1357,13 +1622,30 @@ export const DriverMobileApp: React.FC<DriverMobileAppProps> = ({
                 ))}
               </div>
 
-              <input
-                type="text"
-                value={emergencyNotes}
-                onChange={(e) => setEmergencyNotes(e.target.value)}
-                placeholder="Optional hazard note: e.g. Bridge submerged at KM 204"
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-rose-700"
-              />
+              {/* SOS Notes with Voice Dictation */}
+              <div className="relative">
+                <input
+                  type="text"
+                  value={emergencyNotes}
+                  onChange={(e) => setEmergencyNotes(e.target.value)}
+                  placeholder={isListeningEmergency ? "Listening... describe the road emergency" : "Optional hazard note: e.g. Bridge submerged at KM 204"}
+                  className={`w-full bg-slate-950 border rounded-xl pl-3 pr-10 py-2 text-xs text-white placeholder-slate-500 focus:outline-none transition-colors ${
+                    isListeningEmergency ? 'border-rose-500 ring-2 ring-rose-500/40' : 'border-slate-800 focus:border-rose-700'
+                  }`}
+                />
+                <button
+                  type="button"
+                  onClick={isListeningEmergency ? stopSpeechToText : () => startSpeechToText('emergency')}
+                  className={`absolute right-1.5 top-1.5 p-1 rounded-lg border transition-colors ${
+                    isListeningEmergency 
+                      ? 'bg-rose-600 text-white border-rose-500 animate-pulse shadow-xs' 
+                      : 'bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700'
+                  }`}
+                  title={isListeningEmergency ? "Stop Listening" : "Voice SOS Dictation"}
+                >
+                  {isListeningEmergency ? <MicOff className="w-3.5 h-3.5" /> : <Mic className="w-3.5 h-3.5" />}
+                </button>
+              </div>
 
               {emergencyAlertSent && (
                 <div className="p-2.5 bg-emerald-950/80 border border-emerald-800 rounded-xl text-emerald-300 text-xs font-semibold flex items-center gap-2">
