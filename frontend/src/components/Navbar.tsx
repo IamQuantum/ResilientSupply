@@ -193,7 +193,18 @@ export const Navbar: React.FC<NavbarProps> = ({
 
       {/* Right Toolbar: Actions Menu + Notifications + User Menu */}
       <div className="flex items-center gap-3">
-        
+        {/* Direct Driver Mobile App Button */}
+        {onOpenDriverApp && (
+          <button
+            type="button"
+            onClick={onOpenDriverApp}
+            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-950 hover:bg-emerald-900 text-emerald-300 border border-emerald-800 rounded-lg text-xs font-bold transition-all shadow-xs"
+          >
+            <Smartphone className="w-3.5 h-3.5 text-emerald-400" />
+            <span>Driver Mobile App</span>
+          </button>
+        )}
+
         {/* Consolidated Actions Dropdown */}
         <div className="relative" ref={actionsRef}>
           <button

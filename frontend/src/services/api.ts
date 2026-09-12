@@ -3,7 +3,14 @@
  * Falls back gracefully to internal state if backend is offline.
  */
 
-const API_BASE = 'http://localhost:8000/api';
+export const getApiBase = () => {
+  if (typeof window !== 'undefined' && window.location.hostname) {
+    return `http://${window.location.hostname}:8000/api`;
+  }
+  return 'http://localhost:8000/api';
+};
+
+const API_BASE = getApiBase();
 
 export async function fetchHealth() {
   try {
@@ -310,4 +317,87 @@ export async function sendDriverEmergency(payload: {
     return null;
   }
 }
+
+export async function fetchHostInfo() {
+  try {
+    const res = await fetch(`${API_BASE}/system/host-info`);
+    if (!res.ok) throw new Error('Failed to fetch host info');
+    return await res.json();
+  } catch (err) {
+    const host = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
+    return {
+      localIp: host,
+      frontendPort: 5173,
+      backendPort: 8000,
+      driverAppUrl: `http://${host}:5173/driver`
+    };
+  }
+}
+
+export async function fetchDriverTrip(truckId: string = 'MH-04-GP-8821') {
+  try {
+    const res = await fetch(`${API_BASE}/driver/trip/${truckId}`);
+    if (!res.ok) throw new Error('Failed to fetch driver trip');
+    return await res.json();
+  } catch (err) {
+    console.warn('Driver trip fetch error:', err);
+    return null;
+  }
+}
+
+export async function fetchDriverMessages(truckId: string = 'MH-04-GP-8821') {
+  try {
+    const res = await fetch(`${API_BASE}/driver/messages/${truckId}`);
+    if (!res.ok) throw new Error('Failed to fetch messages');
+    return await res.json();
+  } catch (err) {
+    return [];
+  }
+}
+
+export async function sendDriverChatMessage(payload: {
+  truckId: string;
+  sender: string;
+  role?: string;
+  text: string;
+}) {
+  try {
+    const res = await fetch(`${API_BASE}/driver/message`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) throw new Error('Failed to send message');
+    return await res.json();
+  } catch (err) {
+    console.error('Send message error:', err);
+    return null;
+  }
+}
+
+export async function submitDriverInspection(payload: {
+  truckId: string;
+  driverName: string;
+  odometer?: number;
+  tyresOk: boolean;
+  brakesOk: boolean;
+  reeferOk: boolean;
+  fluidsOk: boolean;
+  lightsOk: boolean;
+  notes?: string;
+}) {
+  try {
+    const res = await fetch(`${API_BASE}/driver/inspection`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) throw new Error('Failed to submit inspection');
+    return await res.json();
+  } catch (err) {
+    console.error('Inspection submit error:', err);
+    return null;
+  }
+}
+
 

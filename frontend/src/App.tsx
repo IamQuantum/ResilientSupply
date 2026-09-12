@@ -16,6 +16,8 @@ import { WorkforceModal } from './components/WorkforceModal';
 import { NetworkConfigModal } from './components/NetworkConfigModal';
 import { CustomDisruptionModal } from './components/CustomDisruptionModal';
 import { DriverCompanionModal } from './components/DriverCompanionModal';
+import { DriverMobileApp } from './mobile/DriverMobileApp';
+import { DriverQrModal } from './mobile/DriverQrModal';
 import { HelpSupportModal } from './components/HelpSupportModal';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { 
@@ -481,6 +483,45 @@ export function App() {
     setCurrentTab('approvals');
   };
 
+  // Check if route is /driver or #/driver
+  const isDriverRoute = typeof window !== 'undefined' && (
+    window.location.pathname === '/driver' ||
+    window.location.pathname.startsWith('/driver') ||
+    window.location.hash === '#/driver' ||
+    window.location.search.includes('view=driver')
+  );
+
+  const [isDriverMode, setIsDriverMode] = useState<boolean>(isDriverRoute);
+
+  useEffect(() => {
+    const handlePopState = () => {
+      const isDriver = (
+        window.location.pathname === '/driver' ||
+        window.location.pathname.startsWith('/driver') ||
+        window.location.hash === '#/driver' ||
+        window.location.search.includes('view=driver')
+      );
+      setIsDriverMode(isDriver);
+    };
+    window.addEventListener('popstate', handlePopState);
+    window.addEventListener('hashchange', handlePopState);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+      window.removeEventListener('hashchange', handlePopState);
+    };
+  }, []);
+
+  if (isDriverMode) {
+    return (
+      <DriverMobileApp
+        onSwitchToDesktop={() => {
+          window.history.pushState({}, '', '/');
+          setIsDriverMode(false);
+        }}
+      />
+    );
+  }
+
   // If user is not authenticated, present the clean monochrome authentication & enrollment gateway
   if (!currentUser) {
     return <AuthView onLoginSuccess={handleLoginSuccess} />;
@@ -708,15 +749,11 @@ export function App() {
         onDisruptionInjected={handleCustomDisruptionInjected}
       />
 
-      {/* Driver Mobile Companion Portal */}
-      <DriverCompanionModal
+      {/* Driver Mobile Companion Launch & QR Pairing Portal */}
+      <DriverQrModal
         isOpen={isDriverModalOpen}
         onClose={() => setIsDriverModalOpen(false)}
         assignedRouteCode={selectedDisruption?.route || 'PUN-DEL-EXP'}
-        onEmergencyDispatched={() => {
-          setIsDriverModalOpen(false);
-          if (activeOrg) fetchNetworkData(activeOrg.id);
-        }}
       />
 
       {/* Platform Architecture Reference & Support Modal */}

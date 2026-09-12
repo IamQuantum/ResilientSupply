@@ -714,4 +714,69 @@ def report_driver_emergency(req: DriverEmergencyRequest, db: Session = Depends(g
     )
     return res
 
+class DriverMessageRequest(BaseModel):
+    truckId: str = "MH-04-GP-8821"
+    sender: str = "Rameshwar Yadav"
+    role: Optional[str] = "driver"
+    text: str
+
+class DriverInspectionRequest(BaseModel):
+    truckId: str = "MH-04-GP-8821"
+    driverName: str = "Rameshwar Yadav"
+    odometer: Optional[int] = 42810
+    tyresOk: bool = True
+    brakesOk: bool = True
+    reeferOk: bool = True
+    fluidsOk: bool = True
+    lightsOk: bool = True
+    notes: Optional[str] = None
+
+@app.get("/api/system/host-info")
+def get_host_info():
+    """Returns the local network IP and port for mobile pairing via QR code."""
+    import socket
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        s.connect(('10.255.255.255', 1))
+        local_ip = s.getsockname()[0]
+    except Exception:
+        local_ip = '127.0.0.1'
+    finally:
+        s.close()
+    return {
+        "localIp": local_ip,
+        "frontendPort": 5173,
+        "backendPort": 8000,
+        "driverAppUrl": f"http://{local_ip}:5173/driver"
+    }
+
+@app.get("/api/driver/trip/{truck_id}")
+def get_driver_trip(truck_id: str):
+    """Returns active trip waypoints, e-way bill data, hazard warnings, and dispatch messages."""
+    return telemetry_engine.get_trip_details(truck_id=truck_id)
+
+@app.get("/api/driver/messages/{truck_id}")
+def get_driver_messages(truck_id: str):
+    """Retrieves two-way dispatch messages between HQ and driver."""
+    return telemetry_engine.get_driver_messages(truck_id=truck_id)
+
+@app.post("/api/driver/message")
+def send_driver_message(req: DriverMessageRequest):
+    """Sends a message from driver to HQ dispatch or vice versa."""
+    return telemetry_engine.add_driver_message(
+        truck_id=req.truckId,
+        sender=req.sender,
+        role=req.role or "driver",
+        text=req.text
+    )
+
+@app.post("/api/driver/inspection")
+def submit_driver_inspection(req: DriverInspectionRequest):
+    """Submits pre-trip vehicle safety inspection checklist."""
+    return telemetry_engine.submit_inspection(
+        truck_id=req.truckId,
+        data=req.model_dump()
+    )
+
+
 

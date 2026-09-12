@@ -324,3 +324,138 @@ class TelemetryEngine:
             self.fleet_telematics[0]["telematicsStatus"] = "COLD_CHAIN_BREACH"
             return {"status": "success", "event": "Reefer Temperature Spike Detected (12.8°C)", "timestamp": now}
         return {"status": "success", "event": "Standard Telemetry Ping", "timestamp": now}
+
+    def get_trip_details(self, truck_id: str) -> Dict[str, Any]:
+        target = None
+        for t in self.fleet_telematics:
+            if t["truckId"] == truck_id or truck_id in [t.get("truckId", ""), "MH-14-BT-9901"]:
+                target = t
+                break
+        if not target:
+            target = self.fleet_telematics[0]
+
+        tid = target["truckId"]
+        msgs = self.get_driver_messages(tid)
+
+        return {
+            "truckId": target["truckId"],
+            "driverName": target["driverName"],
+            "driverPhone": target.get("driverPhone", "+91 98201 44819"),
+            "carrier": target.get("carrier", "Allcargo Logistics Express"),
+            "routeCode": target.get("route", "PUN-DEL-EXP"),
+            "origin": "Pune Chakan DC",
+            "destination": "Delhi NCR Hub",
+            "originAddress": "MIDC Phase 2, Chakan, Pune, Maharashtra 410501",
+            "destinationAddress": "Sector 34, Gurugram Logistics Park, Haryana 122004",
+            "totalDistanceKm": 1450,
+            "remainingKm": 840,
+            "currentLat": target["lat"],
+            "currentLng": target["lng"],
+            "speedKmh": target["speedKmh"],
+            "dutyStatus": target.get("dutyStatus", "ON_DUTY_DRIVING"),
+            "batteryPct": target.get("batteryPct", 88),
+            "nextManoeuvre": "In 4.2 km, continue on NH48 toward Bharuch bypass",
+            "eta": "Tomorrow, 08:30 AM",
+            "waypoints": [
+                {"name": "Pune Chakan DC", "city": "Pune", "lat": 18.7606, "lng": 73.8643, "status": "completed"},
+                {"name": "Bhiwandi Central DC", "city": "Mumbai", "lat": 19.2967, "lng": 73.0620, "status": "completed"},
+                {"name": "Surat Bypass Point", "city": "Surat", "lat": 21.1702, "lng": 72.8311, "status": "passed"},
+                {"name": "Bharuch Narmada Bridge", "city": "Bharuch", "lat": 21.7051, "lng": 72.9959, "status": "current"},
+                {"name": "Vadodara Express Gate", "city": "Vadodara", "lat": 22.3072, "lng": 73.1812, "status": "upcoming"},
+                {"name": "Ahmedabad Sanand Hub", "city": "Ahmedabad", "lat": 22.9868, "lng": 72.3814, "status": "upcoming"},
+                {"name": "Jaipur Ring Bypass", "city": "Jaipur", "lat": 26.9124, "lng": 75.7873, "status": "upcoming"},
+                {"name": "Delhi NCR Hub", "city": "Gurugram", "lat": 28.4908, "lng": 77.0906, "status": "upcoming"}
+            ],
+            "ewayBill": {
+                "billNumber": "5310-9482-1092",
+                "generatedDate": "2026-09-12 06:30 IST",
+                "validUntil": "2026-09-15 23:59 IST",
+                "supplyType": "Outward - Regular Supply",
+                "docType": "Tax Invoice (INV-2026-8819)",
+                "consignor": {
+                    "name": "Tata Motors Ltd - Chakan Plant",
+                    "gstin": "27AAAAC1234F1Z5",
+                    "address": "Plot A-1, MIDC Chakan Phase 2, Pune, MH 410501"
+                },
+                "consignee": {
+                    "name": "Delhi NCR Regional Distribution Hub",
+                    "gstin": "07AAACG5678K1Z2",
+                    "address": "Sector 34, Gurugram Logistics Park, HR 122004"
+                },
+                "cargo": {
+                    "description": "Commercial Vehicle Powertrains & Transmissions (420 Units)",
+                    "hsnCode": "8708",
+                    "totalWeight": "14.2 Metric Tonnes",
+                    "totalAmountInr": 4850000,
+                    "taxableAmountInr": 4110169,
+                    "cgstInr": 369915,
+                    "sgstInr": 369915
+                },
+                "transport": {
+                    "transporterName": "Allcargo Logistics Express Ltd",
+                    "transporterId": "27AABCA9001D1Z8",
+                    "vehicleNumber": target["truckId"],
+                    "lrNumber": "AC-2026-9941",
+                    "docDate": "2026-09-12"
+                },
+                "qrPayload": "GSTIN:27AAAAC1234F1Z5|EWB:531094821092|VEH:MH04GP8821|VAL:4850000|DATE:2026-09-12|FROM:410501|TO:122004"
+            },
+            "hazardAlert": {
+                "active": True,
+                "title": "Severe Weather & Waterlogging Warning",
+                "severity": "WARNING",
+                "location": "NH-48 Bharuch - Narmada River Causeway (KM 204)",
+                "message": "Monsoon precipitation active. Water level over causeway bridge +0.8m. Heavy vehicles proceed with caution at <= 40 km/h. AI reroute option standby."
+            },
+            "messages": msgs
+        }
+
+    def get_driver_messages(self, truck_id: str) -> List[Dict[str, Any]]:
+        if not hasattr(self, "_messages"):
+            self._messages: Dict[str, List[Dict[str, Any]]] = {}
+        
+        if truck_id not in self._messages:
+            self._messages[truck_id] = [
+                {
+                    "id": "msg-1",
+                    "sender": "HQ Dispatcher (Pranath)",
+                    "role": "dispatch",
+                    "text": "Consignment dispatched from Chakan DC. e-Way Bill 5310-9482-1092 verified by GST portal.",
+                    "time": "08:15 AM"
+                },
+                {
+                    "id": "msg-2",
+                    "sender": "System Weather Bot",
+                    "role": "system",
+                    "text": "Monsoon radar active. Flash flood alert active on NH48 between Surat and Bharuch. Safe transit speed 40 km/h.",
+                    "time": "09:30 AM"
+                }
+            ]
+        return self._messages[truck_id]
+
+    def add_driver_message(self, truck_id: str, sender: str, role: str, text: str) -> Dict[str, Any]:
+        msgs = self.get_driver_messages(truck_id)
+        new_msg = {
+            "id": f"msg-{len(msgs) + 1}-{int(datetime.utcnow().timestamp())}",
+            "sender": sender,
+            "role": role,
+            "text": text,
+            "time": datetime.utcnow().strftime("%I:%M %p")
+        }
+        msgs.append(new_msg)
+        return {"status": "success", "message": new_msg}
+
+    def submit_inspection(self, truck_id: str, data: Dict[str, Any]) -> Dict[str, Any]:
+        if not hasattr(self, "_inspections"):
+            self._inspections: Dict[str, List[Dict[str, Any]]] = {}
+        if truck_id not in self._inspections:
+            self._inspections[truck_id] = []
+        
+        record = {
+            "truckId": truck_id,
+            "timestamp": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC"),
+            **data
+        }
+        self._inspections[truck_id].append(record)
+        return {"status": "success", "inspection": record}
+
