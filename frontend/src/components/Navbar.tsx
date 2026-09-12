@@ -17,7 +17,8 @@ import {
   Lock,
   Check,
   AlertTriangle,
-  Smartphone
+  Smartphone,
+  Compass
 } from 'lucide-react';
 import { UserProfile, OrganizationInfo, CustomRoleInfo, DisruptionEvent } from '../types';
 
@@ -35,6 +36,7 @@ interface NavbarProps {
   onOpenNetworkConfig?: () => void;
   onOpenCustomDisruption?: () => void;
   onOpenDriverApp?: () => void;
+  onOpenCustomRoute?: () => void;
   disruptionsList?: DisruptionEvent[];
   onSignOut?: () => void;
   onSwitchToDemo?: () => void;
@@ -60,6 +62,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenNetworkConfig,
   onOpenCustomDisruption,
   onOpenDriverApp,
+  onOpenCustomRoute,
   disruptionsList = [],
   onSignOut,
   onSwitchToDemo,
@@ -202,6 +205,19 @@ export const Navbar: React.FC<NavbarProps> = ({
           >
             <Smartphone className="w-3.5 h-3.5 text-emerald-400" />
             <span>Driver Mobile App</span>
+          </button>
+        )}
+
+        {/* Custom Real-Road Route Dispatcher Button */}
+        {onOpenCustomRoute && (
+          <button
+            type="button"
+            onClick={onOpenCustomRoute}
+            title="Calculate and dispatch custom real-road routes with OSRM"
+            className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 bg-sky-50 hover:bg-sky-100 text-sky-800 border border-sky-200 rounded-lg text-xs font-bold transition-all shadow-xs"
+          >
+            <Compass className="w-3.5 h-3.5 text-sky-600" />
+            <span>Build Road Route</span>
           </button>
         )}
 

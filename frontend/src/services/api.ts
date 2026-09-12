@@ -452,5 +452,84 @@ export async function resetDriverReroute(truckId: string = 'MH-04-GP-8821') {
   }
 }
 
+// --- Real-Road OSRM Routing & Dynamic Route Dispatcher ---
+
+export async function geocodeLocation(query: string) {
+  try {
+    const res = await fetch(`${API_BASE}/routing/geocode?q=${encodeURIComponent(query)}`);
+    if (!res.ok) throw new Error('Geocoding failed');
+    return await res.json();
+  } catch (err) {
+    console.error('Geocode error:', err);
+    return [];
+  }
+}
+
+export async function calculateRoadRoute(payload: {
+  origin?: string;
+  destination?: string;
+  originLat: number;
+  originLng: number;
+  destLat: number;
+  destLng: number;
+  viaWaypoints?: [number, number][];
+}) {
+  try {
+    const res = await fetch(`${API_BASE}/routing/calculate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) throw new Error('Route calculation failed');
+    return await res.json();
+  } catch (err) {
+    console.error('Calculate route error:', err);
+    return null;
+  }
+}
+
+export async function dispatchCustomRoute(payload: {
+  truckId?: string;
+  origin: string;
+  destination: string;
+  originAddress?: string;
+  destinationAddress?: string;
+  distanceKm: number;
+  durationHours?: number;
+  etaFormatted?: string;
+  polyline: [number, number][];
+  steps?: any[];
+  firstManoeuvre?: string;
+  firstManoeuvreHi?: string;
+  routeCode?: string;
+}) {
+  try {
+    const res = await fetch(`${API_BASE}/routing/dispatch`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) throw new Error('Route dispatch failed');
+    return await res.json();
+  } catch (err) {
+    console.error('Dispatch route error:', err);
+    return null;
+  }
+}
+
+export async function resetCustomRoute(truckId: string = 'MH-04-GP-8821') {
+  try {
+    const res = await fetch(`${API_BASE}/routing/reset-dispatch?truckId=${encodeURIComponent(truckId)}`, {
+      method: 'POST'
+    });
+    if (!res.ok) throw new Error('Reset custom route failed');
+    return await res.json();
+  } catch (err) {
+    console.error('Reset custom route error:', err);
+    return null;
+  }
+}
+
+
 
 

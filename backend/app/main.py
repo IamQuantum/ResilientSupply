@@ -1,8 +1,11 @@
 from fastapi import FastAPI, HTTPException, Depends
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional, Dict, Any, Union
 from datetime import datetime
+import os
 from sqlalchemy.orm import Session
 import hashlib
 
@@ -15,6 +18,7 @@ from .policy_rag import PolicyRAGEngine
 from .telemetry import TelemetryEngine
 from .dispatch import DispatchEngine
 from .company import CompanyEngine
+from .routing_service import calculate_road_route, geocode_location
 
 app = FastAPI(
     title="ResilientChain AI Backend (India Logistics & GenAI Edition)",
@@ -819,6 +823,81 @@ def accept_driver_reroute(req: AcceptRerouteRequest):
 def reset_driver_reroute(truckId: Optional[str] = "MH-04-GP-8821"):
     """Resets reroute back to standard arterial corridor."""
     return telemetry_engine.reset_reroute(truck_id=truckId or "MH-04-GP-8821")
+
+# --- Dynamic Real-Road Routing & Custom Route Dispatcher ---
+
+class CalculateRouteRequest(BaseModel):
+    origin: Optional[str] = "Pune"
+    destination: Optional[str] = "Delhi"
+    originLat: float
+    originLng: float
+    destLat: float
+    destLng: float
+    viaWaypoints: Optional[List[List[float]]] = None
+
+class DispatchRouteRequest(BaseModel):
+    truckId: Optional[str] = "MH-04-GP-8821"
+    origin: str
+    destination: str
+    originAddress: Optional[str] = None
+    destinationAddress: Optional[str] = None
+    distanceKm: float
+    durationHours: Optional[float] = None
+    etaFormatted: Optional[str] = None
+    polyline: List[List[float]]
+    steps: Optional[List[Dict[str, Any]]] = None
+    firstManoeuvre: Optional[str] = None
+    firstManoeuvreHi: Optional[str] = None
+    routeCode: Optional[str] = None
+
+@app.get("/api/routing/geocode")
+def get_geocode_results(q: str):
+    """Geocode any city, hub, or address query using OpenStreetMap Nominatim."""
+    return geocode_location(q)
+
+@app.post("/api/routing/calculate")
+def calculate_road_navigation(req: CalculateRouteRequest):
+    """Calculates true asphalt road geometry, steps, distance, and ETA using OSRM."""
+    via = [(pt[0], pt[1]) for pt in req.viaWaypoints] if req.viaWaypoints else None
+    return calculate_road_route(
+        origin_lat=req.originLat,
+        origin_lng=req.originLng,
+        dest_lat=req.destLat,
+        dest_lng=req.destLng,
+        via_waypoints=via
+    )
+
+@app.post("/api/routing/dispatch")
+def dispatch_custom_route(req: DispatchRouteRequest):
+    """Dispatches an asphalt road-calculated route directly to the driver mobile app."""
+    return telemetry_engine.set_custom_dispatched_route(
+        truck_id=req.truckId or "MH-04-GP-8821",
+        route_data=req.model_dump()
+    )
+
+@app.post("/api/routing/reset-dispatch")
+def reset_custom_route(truckId: Optional[str] = "MH-04-GP-8821"):
+    """Clears custom dispatched route back to standard corridor."""
+    return telemetry_engine.clear_custom_dispatched_route(truck_id=truckId or "MH-04-GP-8821")
+
+# --- Production Unified Single-Port Deployment Serving ---
+frontend_dist = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../frontend/dist"))
+if os.path.exists(frontend_dist):
+    assets_dir = os.path.join(frontend_dist, "assets")
+    if os.path.exists(assets_dir):
+        app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
+
+    @app.api_route("/{full_path:path}", methods=["GET", "HEAD"])
+    async def serve_spa(full_path: str):
+        if full_path.startswith("api/"):
+            raise HTTPException(status_code=404, detail="API route not found")
+        file_path = os.path.join(frontend_dist, full_path)
+        if os.path.isfile(file_path):
+            return FileResponse(file_path)
+        index_path = os.path.join(frontend_dist, "index.html")
+        return FileResponse(index_path)
+
+
 
 
 

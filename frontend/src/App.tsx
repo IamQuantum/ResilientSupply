@@ -18,6 +18,7 @@ import { CustomDisruptionModal } from './components/CustomDisruptionModal';
 import { DriverCompanionModal } from './components/DriverCompanionModal';
 import { DriverMobileApp } from './mobile/DriverMobileApp';
 import { DriverQrModal } from './mobile/DriverQrModal';
+import { CustomRouteModal } from './components/CustomRouteModal';
 import { HelpSupportModal } from './components/HelpSupportModal';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { 
@@ -55,6 +56,7 @@ export function App() {
   const [isNetworkConfigOpen, setIsNetworkConfigOpen] = useState<boolean>(false);
   const [isWorkforceModalOpen, setIsWorkforceModalOpen] = useState<boolean>(false);
   const [isCustomDisruptionOpen, setIsCustomDisruptionOpen] = useState<boolean>(false);
+  const [isCustomRouteModalOpen, setIsCustomRouteModalOpen] = useState<boolean>(false);
 
   const [currentTab, setCurrentTab] = useState<NavigationTab>('control-center');
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -572,6 +574,7 @@ export function App() {
           onOpenNetworkConfig={() => setIsNetworkConfigOpen(true)}
           onOpenCustomDisruption={() => setIsCustomDisruptionOpen(true)}
           onOpenDriverApp={() => setIsDriverModalOpen(true)}
+          onOpenCustomRoute={() => setIsCustomRouteModalOpen(true)}
           disruptionsList={disruptions}
           onSignOut={handleSignOut}
           onSwitchToDemo={handleSwitchToDemo}
@@ -754,6 +757,19 @@ export function App() {
         isOpen={isDriverModalOpen}
         onClose={() => setIsDriverModalOpen(false)}
         assignedRouteCode={selectedDisruption?.route || 'PUN-DEL-EXP'}
+      />
+
+      {/* Real-Road Route Builder & OSRM Dispatcher Modal */}
+      <CustomRouteModal
+        isOpen={isCustomRouteModalOpen}
+        onClose={() => setIsCustomRouteModalOpen(false)}
+        onRouteDispatched={(route) => {
+          setGlobalToast({
+            message: `Route ${route.origin} ➔ ${route.destination} (${route.distanceKm} km) dispatched to ${route.truckId}!`,
+            type: 'success'
+          });
+          setTimeout(() => setGlobalToast(null), 5000);
+        }}
       />
 
       {/* Platform Architecture Reference & Support Modal */}

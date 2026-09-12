@@ -7,6 +7,7 @@ emergency alerts, and IMD weather / NHAI toll sensor telemetry.
 from typing import List, Dict, Any, Optional
 from datetime import datetime
 import random
+from app.routing_service import calculate_road_route, geocode_location
 
 class TelemetryEngine:
     def __init__(self):
@@ -337,6 +338,75 @@ class TelemetryEngine:
         tid = target["truckId"]
         msgs = self.get_driver_messages(tid)
 
+        # Check if there is a custom dispatched route for this truck
+        if hasattr(self, "_custom_dispatched_routes") and truck_id in self._custom_dispatched_routes:
+            custom = self._custom_dispatched_routes[truck_id]
+            return {
+                "truckId": target["truckId"],
+                "driverName": target["driverName"],
+                "driverPhone": target.get("driverPhone", "+91 98201 44819"),
+                "carrier": target.get("carrier", "Allcargo Logistics Express"),
+                "routeCode": custom.get("routeCode", f"{custom.get('origin', 'ORG')[:3].upper()}-{custom.get('destination', 'DST')[:3].upper()}-EXP"),
+                "origin": custom.get("origin", "Custom Origin"),
+                "destination": custom.get("destination", "Custom Destination"),
+                "originAddress": custom.get("originAddress", custom.get("origin", "Origin Address")),
+                "destinationAddress": custom.get("destinationAddress", custom.get("destination", "Destination Address")),
+                "totalDistanceKm": custom.get("distanceKm", 450),
+                "remainingKm": custom.get("distanceKm", 450),
+                "currentLat": target["lat"],
+                "currentLng": target["lng"],
+                "speedKmh": target["speedKmh"],
+                "dutyStatus": target.get("dutyStatus", "ON_DUTY_DRIVING"),
+                "batteryPct": target.get("batteryPct", 88),
+                "nextManoeuvre": custom.get("firstManoeuvre", "Proceed along assigned road corridor"),
+                "nextManoeuvreHi": custom.get("firstManoeuvreHi", "Nirdharit raste par aage badhein"),
+                "eta": custom.get("etaFormatted", "Today, 06:30 PM"),
+                "activeReroute": None,
+                "isCustomRoute": True,
+                "roadPolyline": custom.get("polyline", []),
+                "steps": custom.get("steps", []),
+                "waypoints": [
+                    {"name": custom.get("origin", "Origin DC"), "city": custom.get("origin", "Origin"), "lat": target["lat"], "lng": target["lng"], "status": "current"},
+                    {"name": custom.get("destination", "Destination Hub"), "city": custom.get("destination", "Destination"), "lat": custom.get("destLat", target["lat"]), "lng": custom.get("destLng", target["lng"]), "status": "upcoming"}
+                ],
+                "ewayBill": {
+                    "billNumber": f"5310-{random.randint(1000, 9999)}-{random.randint(1000, 9999)}",
+                    "generatedDate": datetime.utcnow().strftime("%Y-%m-%d %H:%M IST"),
+                    "validUntil": "2026-09-16 23:59 IST",
+                    "supplyType": "Outward - Regular Supply",
+                    "docType": "Tax Invoice (INV-CUSTOM-2026)",
+                    "consignor": {
+                        "name": f"{custom.get('origin', 'Origin')} Distribution Center",
+                        "gstin": "27AAAAC1234F1Z5",
+                        "address": custom.get("originAddress", custom.get("origin"))
+                    },
+                    "consignee": {
+                        "name": f"{custom.get('destination', 'Destination')} Regional Hub",
+                        "gstin": "07AAACG5678K1Z2",
+                        "address": custom.get("destinationAddress", custom.get("destination"))
+                    },
+                    "cargo": {
+                        "description": "High-Priority Industrial Freight Assemblies",
+                        "hsnCode": "8708",
+                        "totalWeight": "12.5 Metric Tonnes",
+                        "totalAmountInr": 3600000,
+                        "taxableAmountInr": 3050847,
+                        "cgstInr": 274576,
+                        "sgstInr": 274576
+                    },
+                    "transport": {
+                        "transporterName": target.get("carrier", "Allcargo Logistics Express Ltd"),
+                        "transporterId": "27AABCA9001D1Z8",
+                        "vehicleNumber": target["truckId"],
+                        "lrNumber": f"AC-{random.randint(1000, 9999)}",
+                        "docDate": datetime.utcnow().strftime("%Y-%m-%d")
+                    },
+                    "qrPayload": f"GSTIN:27AAAAC1234F1Z5|EWB:531094821092|VEH:{target['truckId']}|VAL:3600000"
+                },
+                "hazardAlert": None,
+                "messages": msgs
+            }
+
         # Check for active reroute proposal or active detour
         active_reroute = target.get("activeReroute")
         if not active_reroute and hasattr(self, "_active_reroutes"):
@@ -354,12 +424,24 @@ class TelemetryEngine:
             {"name": "Delhi NCR Hub", "city": "Gurugram", "lat": 28.4908, "lng": 77.0906, "status": "upcoming"}
         ]
         next_manoeuvre = "In 4.2 km, continue on NH48 toward Bharuch bypass"
+        next_manoeuvre_hi = "Aage 4.2 kilometer tak NH-48 par Bharuch bypass ki taraf chalte rahein"
 
         if active_reroute and active_reroute.get("status") == "ACCEPTED":
             if "newWaypoints" in active_reroute:
                 waypoints = active_reroute["newWaypoints"]
             if "newManoeuvre" in active_reroute:
                 next_manoeuvre = active_reroute["newManoeuvre"]
+                next_manoeuvre_hi = "Aage 1.8 kilometer chalkar SH-188 bypass exit lein"
+
+        # Standard corridor road-snapped polyline
+        if not hasattr(self, "_standard_road_cache"):
+            try:
+                self._standard_road_cache = calculate_road_route(18.7606, 73.8643, 28.4908, 77.0906)
+            except Exception:
+                self._standard_road_cache = None
+
+        road_poly = self._standard_road_cache.get("polyline") if self._standard_road_cache else None
+        road_steps = self._standard_road_cache.get("steps") if self._standard_road_cache else []
 
         return {
             "truckId": target["truckId"],
@@ -379,8 +461,12 @@ class TelemetryEngine:
             "dutyStatus": target.get("dutyStatus", "ON_DUTY_DRIVING"),
             "batteryPct": target.get("batteryPct", 88),
             "nextManoeuvre": next_manoeuvre,
+            "nextManoeuvreHi": next_manoeuvre_hi,
             "eta": "Tomorrow, 09:15 AM" if (active_reroute and active_reroute.get("status") == "ACCEPTED") else "Tomorrow, 08:30 AM",
             "activeReroute": active_reroute,
+            "isCustomRoute": False,
+            "roadPolyline": road_poly,
+            "steps": road_steps,
             "waypoints": waypoints,
             "ewayBill": {
                 "billNumber": "5310-9482-1092",
@@ -589,4 +675,55 @@ class TelemetryEngine:
         }
         self._inspections[truck_id].append(record)
         return {"status": "success", "inspection": record}
+
+    def set_custom_dispatched_route(
+        self,
+        truck_id: str,
+        route_data: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Assigns a real-road calculated custom route to a truck driver."""
+        if not hasattr(self, "_custom_dispatched_routes"):
+            self._custom_dispatched_routes = {}
+        
+        self._custom_dispatched_routes[truck_id] = route_data
+        
+        # Teleport truck to route start position
+        for t in self.fleet_telematics:
+            if t["truckId"] == truck_id or truck_id == "MH-04-GP-8821":
+                if route_data.get("polyline") and len(route_data["polyline"]) > 0:
+                    start_pt = route_data["polyline"][0]
+                    t["lat"] = start_pt[0]
+                    t["lng"] = start_pt[1]
+                t["route"] = route_data.get("routeCode", "CUSTOM-CORRIDOR")
+                t["location"] = f"{route_data.get('origin', 'Origin DC')} Gateway"
+                t["speedKmh"] = 54
+                t["telematicsStatus"] = "OPTIMAL"
+                t["activeReroute"] = None
+                break
+        
+        origin_name = route_data.get("origin", "Origin DC")
+        dest_name = route_data.get("destination", "Destination Hub")
+        dist_km = route_data.get("distanceKm", 450)
+        
+        self.add_driver_message(
+            truck_id=truck_id,
+            sender="HQ Operations Dispatch",
+            role="dispatch",
+            text=f"🚛 NEW ROUTE DISPATCHED: {origin_name} ➔ {dest_name} ({dist_km} km). Asphalt road navigation with turn-by-turn maneuvers active."
+        )
+        return {"status": "success", "truckId": truck_id, "route": route_data}
+
+    def clear_custom_dispatched_route(self, truck_id: str) -> Dict[str, Any]:
+        """Clears custom dispatched route back to standard corridor."""
+        if hasattr(self, "_custom_dispatched_routes"):
+            self._custom_dispatched_routes.pop(truck_id, None)
+        for t in self.fleet_telematics:
+            if t["truckId"] == truck_id or truck_id == "MH-04-GP-8821":
+                t["route"] = "R1 (NH-48)"
+                t["lat"] = 21.7051
+                t["lng"] = 72.9959
+                t["location"] = "Surat-Bharuch Transit Bridge (KM 204)"
+                break
+        return {"status": "success", "message": f"Cleared custom route for {truck_id}"}
+
 

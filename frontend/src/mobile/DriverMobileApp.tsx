@@ -110,6 +110,7 @@ export const DriverMobileApp: React.FC<DriverMobileAppProps> = ({
   const [isSimulatingDrive, setIsSimulatingDrive] = useState<boolean>(false);
   const simIntervalRef = useRef<any>(null);
   const watchIdRef = useRef<number | null>(null);
+  const currentPathIdxRef = useRef<number>(0);
 
   // Duty Status & Breaks
   const [dutyStatus, setDutyStatus] = useState<string>('ON_DUTY_DRIVING');
@@ -474,7 +475,9 @@ export const DriverMobileApp: React.FC<DriverMobileAppProps> = ({
     const isDetourActive = activeReroute && activeReroute.status === 'ACCEPTED';
     const activeRouteLine: [number, number][] = (isDetourActive && activeReroute.detourPolyline)
       ? activeReroute.detourPolyline
-      : standardCorridorCoords;
+      : (tripData?.roadPolyline && tripData.roadPolyline.length > 0)
+        ? tripData.roadPolyline
+        : standardCorridorCoords;
 
     if (!mapInstanceRef.current) {
       const map = L.map(mapContainerRef.current, {
@@ -554,7 +557,7 @@ export const DriverMobileApp: React.FC<DriverMobileAppProps> = ({
         });
       }
     }
-  }, [activeTab, currentCoords, activeReroute]);
+  }, [activeTab, currentCoords, activeReroute, tripData?.roadPolyline]);
 
   // Clean up map when component unmounts
   useEffect(() => {
@@ -644,9 +647,26 @@ export const DriverMobileApp: React.FC<DriverMobileAppProps> = ({
       simIntervalRef.current = setInterval(() => {
         setCurrentCoords(prev => {
           const isDetour = activeReroute && activeReroute.status === 'ACCEPTED';
-          // Progress along highway or detour
-          const newLat = Number((prev.lat + (isDetour ? 0.007 : 0.006)).toFixed(4));
-          const newLng = Number((prev.lng + (isDetour ? 0.004 : 0.003)).toFixed(4));
+          const activeLine = (isDetour && activeReroute.detourPolyline)
+            ? activeReroute.detourPolyline
+            : (tripData?.roadPolyline && tripData.roadPolyline.length > 0)
+              ? tripData.roadPolyline
+              : standardCorridorCoords;
+
+          let newLat = prev.lat;
+          let newLng = prev.lng;
+
+          if (activeLine && activeLine.length > 0) {
+            const stepSkip = activeLine.length > 300 ? 5 : 1;
+            currentPathIdxRef.current = (currentPathIdxRef.current + stepSkip) % activeLine.length;
+            const pt = activeLine[currentPathIdxRef.current];
+            newLat = Number(pt[0].toFixed(5));
+            newLng = Number(pt[1].toFixed(5));
+          } else {
+            newLat = Number((prev.lat + (isDetour ? 0.007 : 0.006)).toFixed(4));
+            newLng = Number((prev.lng + (isDetour ? 0.004 : 0.003)).toFixed(4));
+          }
+
           const simulatedSpeed = Math.floor(Math.random() * 12) + 56;
           setSpeedKmh(simulatedSpeed);
           setHeading(32);
@@ -672,7 +692,7 @@ export const DriverMobileApp: React.FC<DriverMobileAppProps> = ({
 
           return { lat: newLat, lng: newLng };
         });
-      }, 3000);
+      }, 2500);
     }
   };
 
@@ -1026,9 +1046,13 @@ export const DriverMobileApp: React.FC<DriverMobileAppProps> = ({
                 </div>
                 <div>
                   <div className={`text-[11px] font-semibold uppercase tracking-wide ${
-                    isDetourActive ? 'text-emerald-400' : 'text-sky-400'
+                    isDetourActive ? 'text-emerald-400' : tripData?.isCustomRoute ? 'text-sky-400 font-bold' : 'text-sky-400'
                   }`}>
-                    {isDetourActive ? 'Detour Route • SH-188 Bypass' : 'Next Maneuver • NH-48'}
+                    {isDetourActive 
+                      ? 'Detour Route • SH-188 Bypass' 
+                      : tripData?.isCustomRoute 
+                      ? `Road Navigation • ${tripData.origin} ➔ ${tripData.destination}` 
+                      : 'Next Maneuver • NH-48'}
                   </div>
                   <div className="text-xs font-bold text-white leading-tight mt-0.5">
                     {tripData?.nextManoeuvre || 'In 4.2 km, continue on NH48 toward Bharuch bypass'}
@@ -1044,9 +1068,14 @@ export const DriverMobileApp: React.FC<DriverMobileAppProps> = ({
                         "In 4.2 km, continue on State Highway 188 detour toward Ankleshwar ring bypass.",
                         "Aage 4.2 kilometer chalkar State Highway 188 detour se Ankleshwar bypass ki taraf chalein."
                       );
+                    } else if (tripData?.nextManoeuvre) {
+                      speakGuidance(
+                        tripData.nextManoeuvre,
+                        tripData.nextManoeuvreHi || tripData.nextManoeuvre
+                      );
                     } else {
                       speakGuidance(
-                        tripData?.nextManoeuvre || 'In 4.2 km, continue on NH48 toward Bharuch bypass',
+                        'In 4.2 km, continue on NH48 toward Bharuch bypass',
                         'Aage 4.2 kilometer tak NH-48 par Bharuch bypass ki taraf chalte rahein'
                       );
                     }
