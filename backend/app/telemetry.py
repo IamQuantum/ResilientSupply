@@ -337,6 +337,30 @@ class TelemetryEngine:
         tid = target["truckId"]
         msgs = self.get_driver_messages(tid)
 
+        # Check for active reroute proposal or active detour
+        active_reroute = target.get("activeReroute")
+        if not active_reroute and hasattr(self, "_active_reroutes"):
+            active_reroute = self._active_reroutes.get(tid) or self._active_reroutes.get("default")
+
+        # Determine waypoints and manoeuvre based on reroute state
+        waypoints = [
+            {"name": "Pune Chakan DC", "city": "Pune", "lat": 18.7606, "lng": 73.8643, "status": "completed"},
+            {"name": "Bhiwandi Central DC", "city": "Mumbai", "lat": 19.2967, "lng": 73.0620, "status": "completed"},
+            {"name": "Surat Bypass Point", "city": "Surat", "lat": 21.1702, "lng": 72.8311, "status": "passed"},
+            {"name": "Bharuch Narmada Bridge", "city": "Bharuch", "lat": 21.7051, "lng": 72.9959, "status": "current"},
+            {"name": "Vadodara Express Gate", "city": "Vadodara", "lat": 22.3072, "lng": 73.1812, "status": "upcoming"},
+            {"name": "Ahmedabad Sanand Hub", "city": "Ahmedabad", "lat": 22.9868, "lng": 72.3814, "status": "upcoming"},
+            {"name": "Jaipur Ring Bypass", "city": "Jaipur", "lat": 26.9124, "lng": 75.7873, "status": "upcoming"},
+            {"name": "Delhi NCR Hub", "city": "Gurugram", "lat": 28.4908, "lng": 77.0906, "status": "upcoming"}
+        ]
+        next_manoeuvre = "In 4.2 km, continue on NH48 toward Bharuch bypass"
+
+        if active_reroute and active_reroute.get("status") == "ACCEPTED":
+            if "newWaypoints" in active_reroute:
+                waypoints = active_reroute["newWaypoints"]
+            if "newManoeuvre" in active_reroute:
+                next_manoeuvre = active_reroute["newManoeuvre"]
+
         return {
             "truckId": target["truckId"],
             "driverName": target["driverName"],
@@ -347,25 +371,17 @@ class TelemetryEngine:
             "destination": "Delhi NCR Hub",
             "originAddress": "MIDC Phase 2, Chakan, Pune, Maharashtra 410501",
             "destinationAddress": "Sector 34, Gurugram Logistics Park, Haryana 122004",
-            "totalDistanceKm": 1450,
+            "totalDistanceKm": 1450 + (48 if active_reroute and active_reroute.get("status") == "ACCEPTED" else 0),
             "remainingKm": 840,
             "currentLat": target["lat"],
             "currentLng": target["lng"],
             "speedKmh": target["speedKmh"],
             "dutyStatus": target.get("dutyStatus", "ON_DUTY_DRIVING"),
             "batteryPct": target.get("batteryPct", 88),
-            "nextManoeuvre": "In 4.2 km, continue on NH48 toward Bharuch bypass",
-            "eta": "Tomorrow, 08:30 AM",
-            "waypoints": [
-                {"name": "Pune Chakan DC", "city": "Pune", "lat": 18.7606, "lng": 73.8643, "status": "completed"},
-                {"name": "Bhiwandi Central DC", "city": "Mumbai", "lat": 19.2967, "lng": 73.0620, "status": "completed"},
-                {"name": "Surat Bypass Point", "city": "Surat", "lat": 21.1702, "lng": 72.8311, "status": "passed"},
-                {"name": "Bharuch Narmada Bridge", "city": "Bharuch", "lat": 21.7051, "lng": 72.9959, "status": "current"},
-                {"name": "Vadodara Express Gate", "city": "Vadodara", "lat": 22.3072, "lng": 73.1812, "status": "upcoming"},
-                {"name": "Ahmedabad Sanand Hub", "city": "Ahmedabad", "lat": 22.9868, "lng": 72.3814, "status": "upcoming"},
-                {"name": "Jaipur Ring Bypass", "city": "Jaipur", "lat": 26.9124, "lng": 75.7873, "status": "upcoming"},
-                {"name": "Delhi NCR Hub", "city": "Gurugram", "lat": 28.4908, "lng": 77.0906, "status": "upcoming"}
-            ],
+            "nextManoeuvre": next_manoeuvre,
+            "eta": "Tomorrow, 09:15 AM" if (active_reroute and active_reroute.get("status") == "ACCEPTED") else "Tomorrow, 08:30 AM",
+            "activeReroute": active_reroute,
+            "waypoints": waypoints,
             "ewayBill": {
                 "billNumber": "5310-9482-1092",
                 "generatedDate": "2026-09-12 06:30 IST",
@@ -409,6 +425,121 @@ class TelemetryEngine:
             },
             "messages": msgs
         }
+
+    def push_reroute_to_fleet(
+        self,
+        incident_id: str = "disr-01",
+        strategy_id: str = "strat-b",
+        carrier: str = "Allcargo Logistics Express",
+        notes: str = None
+    ) -> Dict[str, Any]:
+        reroute_id = f"reroute-{int(datetime.utcnow().timestamp())}"
+        now_time = datetime.utcnow().strftime("%I:%M %p")
+        
+        reroute_data = {
+            "rerouteId": reroute_id,
+            "incidentId": incident_id,
+            "strategyId": strategy_id,
+            "status": "PROPOSED",
+            "reason": "NH-48 Narmada Bridge Submersion (KM 204)",
+            "strategyName": "Dynamic Highway Bypass via SH-188 & Ankleshwar Ring",
+            "detourSummary": "Divert at Surat Exit 18 → SH-188 State Highway → Vadodara South Gateway",
+            "originalCorridor": "NH-48 Direct Arterial",
+            "newCorridor": "SH-188 Western Bypass Detour",
+            "addedKm": 48,
+            "etaDelayMinutes": 45,
+            "approvedBy": "Aditya (VP Global Supply Chain)",
+            "approvedAt": now_time,
+            "newManoeuvre": "In 1.8 km, take Exit 18 for SH-188 State Highway Bypass toward Vadodara",
+            "newWaypoints": [
+                {"name": "Pune Chakan DC", "city": "Pune", "lat": 18.7606, "lng": 73.8643, "status": "completed"},
+                {"name": "Bhiwandi Central Hub", "city": "Mumbai", "lat": 19.2967, "lng": 73.0620, "status": "completed"},
+                {"name": "Surat Exit 18 (Detour Point)", "city": "Surat", "lat": 21.1702, "lng": 72.8311, "status": "passed"},
+                {"name": "SH-188 Ankleshwar East Bypass", "city": "Ankleshwar", "lat": 21.5800, "lng": 73.0500, "status": "current"},
+                {"name": "Narmada Elevated Super-Bridge", "city": "Narmada River", "lat": 21.8200, "lng": 73.1800, "status": "upcoming"},
+                {"name": "Vadodara South Gateway", "city": "Vadodara", "lat": 22.2500, "lng": 73.2100, "status": "upcoming"},
+                {"name": "Ahmedabad Sanand Hub", "city": "Ahmedabad", "lat": 22.9868, "lng": 72.3814, "status": "upcoming"},
+                {"name": "Jaipur Ring Bypass", "city": "Jaipur", "lat": 26.9124, "lng": 75.7873, "status": "upcoming"},
+                {"name": "Delhi NCR Hub", "city": "Gurugram", "lat": 28.4908, "lng": 77.0906, "status": "upcoming"}
+            ],
+            "detourPolyline": [
+                [18.7606, 73.8643],
+                [19.2967, 73.0620],
+                [20.5050, 72.9300],
+                [21.1702, 72.8311], # Detour exit
+                [21.5800, 73.0500], # SH-188
+                [21.8200, 73.1800], # Elevated bridge
+                [22.2500, 73.2100], # Vadodara south
+                [22.3072, 73.1812], # Vadodara
+                [22.9868, 72.3814],
+                [24.5854, 73.7125],
+                [26.9124, 75.7873],
+                [28.4595, 77.0266],
+                [28.6139, 77.2090]
+            ]
+        }
+
+        target_trucks = ["MH-04-GP-8821", "MH-14-BT-9901"]
+        for t in self.fleet_telematics:
+            if t["truckId"] in target_trucks:
+                t["activeReroute"] = reroute_data
+                self.add_driver_message(
+                    truck_id=t["truckId"],
+                    sender="HQ Operations Dispatch",
+                    role="dispatch",
+                    text=f"🚨 REROUTE DISPATCH APPROVED: Narmada River Causeway flooded on NH-48. Approved detour via SH-188 bypass (+48 km). Tap to accept updated navigation waypoints."
+                )
+
+        if not hasattr(self, "_active_reroutes"):
+            self._active_reroutes = {}
+        self._active_reroutes["default"] = reroute_data
+        return {"status": "success", "reroute": reroute_data}
+
+    def accept_reroute(self, truck_id: str, reroute_id: str) -> Dict[str, Any]:
+        target = None
+        for t in self.fleet_telematics:
+            if t["truckId"] == truck_id or truck_id in [t.get("truckId", ""), "MH-14-BT-9901"]:
+                target = t
+                break
+        if not target:
+            target = self.fleet_telematics[0]
+
+        reroute = target.get("activeReroute")
+        if not reroute and hasattr(self, "_active_reroutes"):
+            reroute = self._active_reroutes.get("default")
+
+        if reroute:
+            reroute["status"] = "ACCEPTED"
+            target["activeReroute"] = reroute
+            target["route"] = reroute.get("newCorridor", "SH-188 Detour")
+            target["telematicsStatus"] = "OPTIMAL"
+            target["engineStatus"] = "DRIVING"
+            target["speedKmh"] = 58
+            target["anomalyReason"] = None
+            target["lat"] = 21.5800  # Shift position to detour route
+            target["lng"] = 73.0500
+
+            self.add_driver_message(
+                truck_id=target["truckId"],
+                sender=target["driverName"],
+                role="driver",
+                text="✅ Detour via SH-188 accepted. Navigation updated. Vehicle proceeding toward Vadodara South Gateway."
+            )
+            return {"status": "success", "reroute": reroute, "truck": target}
+        return {"status": "error", "message": "No active reroute found"}
+
+    def reset_reroute(self, truck_id: str) -> Dict[str, Any]:
+        for t in self.fleet_telematics:
+            if t["truckId"] == truck_id or truck_id in [t.get("truckId", ""), "MH-14-BT-9901"]:
+                t["activeReroute"] = None
+                t["route"] = "PUN-DEL-EXP"
+                t["lat"] = 21.7051
+                t["lng"] = 72.9959
+                break
+        if hasattr(self, "_active_reroutes"):
+            self._active_reroutes.pop("default", None)
+        return {"status": "success", "message": "Reroute reset"}
+
 
     def get_driver_messages(self, truck_id: str) -> List[Dict[str, Any]]:
         if not hasattr(self, "_messages"):

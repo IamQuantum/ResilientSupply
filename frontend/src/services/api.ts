@@ -400,4 +400,57 @@ export async function submitDriverInspection(payload: {
   }
 }
 
+export async function pushDriverReroute(payload?: {
+  truckId?: string;
+  incidentId?: string;
+  strategyId?: string;
+  carrier?: string;
+  notes?: string;
+}) {
+  try {
+    const res = await fetch(`${API_BASE}/driver/reroute/push`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload || {})
+    });
+    if (!res.ok) throw new Error('Failed to push reroute');
+    return await res.json();
+  } catch (err) {
+    console.error('Push reroute error:', err);
+    return null;
+  }
+}
+
+export async function acceptDriverReroute(payload: {
+  truckId: string;
+  rerouteId: string;
+}) {
+  try {
+    const res = await fetch(`${API_BASE}/driver/reroute/accept`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) throw new Error('Failed to accept reroute');
+    return await res.json();
+  } catch (err) {
+    console.error('Accept reroute error:', err);
+    return null;
+  }
+}
+
+export async function resetDriverReroute(truckId: string = 'MH-04-GP-8821') {
+  try {
+    const res = await fetch(`${API_BASE}/driver/reroute/reset?truckId=${encodeURIComponent(truckId)}`, {
+      method: 'POST'
+    });
+    if (!res.ok) throw new Error('Failed to reset reroute');
+    return await res.json();
+  } catch (err) {
+    console.error('Reset reroute error:', err);
+    return null;
+  }
+}
+
+
 

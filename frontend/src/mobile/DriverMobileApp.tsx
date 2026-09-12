@@ -36,7 +36,9 @@ import {
   Layers,
   ArrowRight,
   ExternalLink,
-  Laptop
+  Laptop,
+  RotateCcw,
+  Volume2
 } from 'lucide-react';
 import QRCode from 'qrcode';
 import L from 'leaflet';
@@ -47,7 +49,10 @@ import {
   fetchDriverTrip,
   fetchDriverMessages,
   sendDriverChatMessage,
-  submitDriverInspection
+  submitDriverInspection,
+  pushDriverReroute,
+  acceptDriverReroute,
+  resetDriverReroute
 } from '../services/api';
 
 interface DriverMobileAppProps {
@@ -61,8 +66,7 @@ export const DriverMobileApp: React.FC<DriverMobileAppProps> = ({
   onSwitchToDesktop,
   defaultTruckId = 'MH-04-GP-8821'
 }) => {
-  // Navigation Tabs
-  // 'nav' | 'eway' | 'duty' | 'dispatch'
+  // Navigation Tabs: 'nav' | 'eway' | 'duty' | 'dispatch'
   const [activeTab, setActiveTab] = useState<'nav' | 'eway' | 'duty' | 'dispatch'>('nav');
 
   // Truck & Driver Profile
@@ -75,6 +79,13 @@ export const DriverMobileApp: React.FC<DriverMobileAppProps> = ({
   // Trip & Route State
   const [tripData, setTripData] = useState<any>(null);
   const [loadingTrip, setLoadingTrip] = useState<boolean>(true);
+
+  // Closed-Loop Dynamic Rerouting State
+  const [activeReroute, setActiveReroute] = useState<any>(null);
+  const [isAcceptingReroute, setIsAcceptingReroute] = useState<boolean>(false);
+  const [rerouteAlertDismissed, setRerouteAlertDismissed] = useState<boolean>(false);
+  const [hasVibratedForReroute, setHasVibratedForReroute] = useState<boolean>(false);
+  const [rerouteSuccessToast, setRerouteSuccessToast] = useState<string | null>(null);
 
   // Real Hardware GPS & Device State
   const [isPhoneGpsActive, setIsPhoneGpsActive] = useState<boolean>(false);
@@ -96,9 +107,8 @@ export const DriverMobileApp: React.FC<DriverMobileAppProps> = ({
   const watchIdRef = useRef<number | null>(null);
 
   // Duty Status & Breaks
-  // ON_DUTY_DRIVING | MANDATORY_REST_BREAK | AT_DC_UNLOADING | OFF_DUTY | EMERGENCY_HALT
   const [dutyStatus, setDutyStatus] = useState<string>('ON_DUTY_DRIVING');
-  const [dutySeconds, setDutySeconds] = useState<number>(1420); // shift duration
+  const [dutySeconds, setDutySeconds] = useState<number>(1420);
   const [drivingSeconds, setDrivingSeconds] = useState<number>(1150);
   const [breakTimerSeconds, setBreakTimerSeconds] = useState<number>(0);
   const [isBreakTimerActive, setIsBreakTimerActive] = useState<boolean>(false);
@@ -137,6 +147,22 @@ export const DriverMobileApp: React.FC<DriverMobileAppProps> = ({
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markerRef = useRef<L.Marker | null>(null);
   const polylineRef = useRef<L.Polyline | null>(null);
+  const hazardMarkerRef = useRef<L.Marker | null>(null);
+
+  // Standard corridor waypoints: Pune -> Bhiwandi -> Surat -> Bharuch -> Vadodara -> Ahmedabad -> Jaipur -> Delhi
+  const standardCorridorCoords: [number, number][] = [
+    [18.7606, 73.8643], // Pune Chakan
+    [19.2967, 73.0620], // Bhiwandi
+    [20.5050, 72.9300], // Vapi
+    [21.1702, 72.8311], // Surat
+    [21.7051, 72.9959], // Bharuch Bridge
+    [22.3072, 73.1812], // Vadodara
+    [22.9868, 72.3814], // Ahmedabad Sanand
+    [24.5854, 73.7125], // Udaipur
+    [26.9124, 75.7873], // Jaipur
+    [28.4595, 77.0266], // Gurgaon
+    [28.6139, 77.2090]  // Delhi NCR
+  ];
 
   // Update clock every 10s
   useEffect(() => {
@@ -156,7 +182,6 @@ export const DriverMobileApp: React.FC<DriverMobileAppProps> = ({
       if (isBreakTimerActive && breakTimerSeconds > 0) {
         setBreakTimerSeconds(prev => {
           if (prev <= 1) {
-            // Trigger sound/vibration alert when break finishes
             if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
               navigator.vibrate([400, 200, 400]);
             }
@@ -187,7 +212,6 @@ export const DriverMobileApp: React.FC<DriverMobileAppProps> = ({
 
   // Fetch Trip Data & Messages from backend
   const loadTripData = async () => {
-    setLoadingTrip(true);
     try {
       const data = await fetchDriverTrip(truckId);
       if (data) {
@@ -196,6 +220,21 @@ export const DriverMobileApp: React.FC<DriverMobileAppProps> = ({
         setDriverPhone(data.driverPhone || '+91 98201 44819');
         setCarrier(data.carrier || 'Allcargo Logistics Express');
         setRouteCode(data.routeCode || 'PUN-DEL-EXP');
+
+        // Check for closed-loop reroute from HQ
+        if (data.activeReroute) {
+          setActiveReroute(data.activeReroute);
+          if (data.activeReroute.status === 'PROPOSED' && !hasVibratedForReroute) {
+            if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+              navigator.vibrate([300, 100, 300, 100, 400]);
+            }
+            setHasVibratedForReroute(true);
+          }
+        } else {
+          setActiveReroute(null);
+          setHasVibratedForReroute(false);
+        }
+
         if (data.currentLat && data.currentLng) {
           setCurrentCoords({ lat: data.currentLat, lng: data.currentLng });
         }
@@ -207,7 +246,7 @@ export const DriverMobileApp: React.FC<DriverMobileAppProps> = ({
         }
 
         // Generate QR code for e-Way Bill
-        if (data.ewayBill) {
+        if (data.ewayBill && !ewayQrDataUrl) {
           const qrString = data.ewayBill.qrPayload || `GSTIN:${data.ewayBill.consignor?.gstin}|EWB:${data.ewayBill.billNumber}|VAL:${data.ewayBill.cargo?.totalAmountInr}`;
           const url = await QRCode.toDataURL(qrString, {
             width: 320,
@@ -224,28 +263,66 @@ export const DriverMobileApp: React.FC<DriverMobileAppProps> = ({
     }
   };
 
+  // Continuous auto-polling every 3.5s so when HQ approves reroute on desktop, mobile updates live!
   useEffect(() => {
     loadTripData();
-  }, [truckId]);
+    const pollInterval = setInterval(() => {
+      loadTripData();
+    }, 3500);
+    return () => clearInterval(pollInterval);
+  }, [truckId, hasVibratedForReroute]);
+
+  // Handle Driver Accepting Proposed Reroute
+  const handleAcceptReroute = async () => {
+    if (!activeReroute) return;
+    setIsAcceptingReroute(true);
+    try {
+      await acceptDriverReroute({
+        truckId,
+        rerouteId: activeReroute.rerouteId
+      });
+      if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+        navigator.vibrate([200, 100, 200]);
+      }
+      setRerouteSuccessToast('Detour via SH-188 Activated. GPS Navigation Updated.');
+      setTimeout(() => setRerouteSuccessToast(null), 4000);
+      setRerouteAlertDismissed(true);
+      await loadTripData();
+    } catch (err) {
+      console.error('Failed to accept reroute:', err);
+    } finally {
+      setIsAcceptingReroute(false);
+    }
+  };
+
+  // Demo Trigger: Simulate HQ Pushing Reroute
+  const handleSimulateHqReroutePush = async () => {
+    await pushDriverReroute({
+      truckId,
+      incidentId: 'disr-01',
+      strategyId: 'strat-b'
+    });
+    setRerouteAlertDismissed(false);
+    setHasVibratedForReroute(false);
+    await loadTripData();
+  };
+
+  // Demo Reset: Reset back to standard NH-48 route
+  const handleResetDetour = async () => {
+    await resetDriverReroute(truckId);
+    setRerouteAlertDismissed(false);
+    setHasVibratedForReroute(false);
+    await loadTripData();
+  };
 
   // Initialize and update Leaflet Map
   useEffect(() => {
     if (activeTab !== 'nav' || !mapContainerRef.current) return;
 
-    // Default corridor waypoints: Pune -> Bhiwandi -> Surat -> Bharuch -> Vadodara -> Ahmedabad -> Jaipur -> Delhi
-    const corridorCoords: [number, number][] = [
-      [18.7606, 73.8643], // Pune Chakan
-      [19.2967, 73.0620], // Bhiwandi
-      [20.5050, 72.9300], // Vapi
-      [21.1702, 72.8311], // Surat
-      [21.7051, 72.9959], // Bharuch Bridge
-      [22.3072, 73.1812], // Vadodara
-      [22.9868, 72.3814], // Ahmedabad Sanand
-      [24.5854, 73.7125], // Udaipur
-      [26.9124, 75.7873], // Jaipur
-      [28.4595, 77.0266], // Gurgaon
-      [28.6139, 77.2090]  // Delhi NCR
-    ];
+    const isDetourActive = activeReroute && activeReroute.status === 'ACCEPTED';
+    const activeRouteLine: [number, number][] = (isDetourActive && activeReroute.detourPolyline)
+      ? activeReroute.detourPolyline
+      : standardCorridorCoords;
 
     if (!mapInstanceRef.current) {
       const map = L.map(mapContainerRef.current, {
@@ -255,28 +332,28 @@ export const DriverMobileApp: React.FC<DriverMobileAppProps> = ({
         attributionControl: false
       });
 
-      // CartoDB Voyager / Dark Basemap
+      // CartoDB Voyager Basemap
       L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
         maxZoom: 19,
         subdomains: 'abcd'
       }).addTo(map);
 
-      // Draw corridor route line
-      const poly = L.polyline(corridorCoords, {
-        color: '#0284c7', // Sky blue
+      // Draw active route polyline
+      const poly = L.polyline(activeRouteLine, {
+        color: isDetourActive ? '#10b981' : '#0284c7', // Emerald for detour, Sky blue for normal
         weight: 5,
-        opacity: 0.85,
+        opacity: 0.9,
         lineJoin: 'round'
       }).addTo(map);
       polylineRef.current = poly;
 
-      // Add vehicle marker with custom pulsing icon
+      // Add vehicle marker with custom pulsing beacon
       const truckIcon = L.divIcon({
         className: 'custom-driver-pin',
         html: `
           <div class="relative flex items-center justify-center">
-            <span class="animate-ping absolute inline-flex h-8 w-8 rounded-full bg-emerald-400 opacity-75"></span>
-            <div class="relative w-8 h-8 rounded-full bg-slate-900 border-2 border-emerald-400 text-emerald-400 flex items-center justify-center shadow-lg">
+            <span class="animate-ping absolute inline-flex h-8 w-8 rounded-full ${isDetourActive ? 'bg-emerald-400' : 'bg-sky-400'} opacity-75"></span>
+            <div class="relative w-8 h-8 rounded-full bg-slate-900 border-2 ${isDetourActive ? 'border-emerald-400 text-emerald-400' : 'border-sky-400 text-sky-400'} flex items-center justify-center shadow-lg">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/>
                 <path d="M15 18H9"/>
@@ -294,27 +371,23 @@ export const DriverMobileApp: React.FC<DriverMobileAppProps> = ({
       const marker = L.marker([currentCoords.lat, currentCoords.lng], { icon: truckIcon }).addTo(map);
       markerRef.current = marker;
 
-      // Add waypoint markers
-      corridorCoords.forEach((coord, idx) => {
-        if (idx === 0 || idx === corridorCoords.length - 1 || idx === 4) {
-          const isCurrent = idx === 4;
-          const isOrigin = idx === 0;
-          const isDest = idx === corridorCoords.length - 1;
-          const wpIcon = L.divIcon({
-            className: 'custom-wp-pin',
-            html: `
-              <div class="w-4 h-4 rounded-full border-2 border-white shadow-md flex items-center justify-center ${
-                isCurrent ? 'bg-amber-500 ring-2 ring-amber-400 animate-pulse' :
-                isOrigin ? 'bg-emerald-600' :
-                isDest ? 'bg-indigo-600' : 'bg-slate-700'
-              }"></div>
-            `,
-            iconSize: [16, 16],
-            iconAnchor: [8, 8]
-          });
-          L.marker(coord, { icon: wpIcon }).addTo(map);
-        }
+      // Add hazard flood marker at Narmada Bridge Bharuch (KM 204)
+      const floodIcon = L.divIcon({
+        className: 'custom-hazard-pin',
+        html: `
+          <div class="relative flex items-center justify-center">
+            <span class="animate-ping absolute inline-flex h-7 w-7 rounded-full bg-rose-500 opacity-75"></span>
+            <div class="w-6 h-6 rounded-full bg-rose-600 text-white flex items-center justify-center shadow-lg border-2 border-white text-[10px] font-bold">
+              ⚠️
+            </div>
+          </div>
+        `,
+        iconSize: [24, 24],
+        iconAnchor: [12, 12]
       });
+      hazardMarkerRef.current = L.marker([21.7051, 72.9959], { icon: floodIcon })
+        .bindPopup('<b>NH-48 Bharuch Bridge</b><br>Submerged under flood water (+0.8m).')
+        .addTo(map);
 
       mapInstanceRef.current = map;
     } else {
@@ -322,12 +395,14 @@ export const DriverMobileApp: React.FC<DriverMobileAppProps> = ({
       if (markerRef.current) {
         markerRef.current.setLatLng([currentCoords.lat, currentCoords.lng]);
       }
+      if (polylineRef.current) {
+        polylineRef.current.setLatLngs(activeRouteLine);
+        polylineRef.current.setStyle({
+          color: isDetourActive ? '#10b981' : '#0284c7'
+        });
+      }
     }
-
-    return () => {
-      // Map stays cached while on nav tab
-    };
-  }, [activeTab, currentCoords]);
+  }, [activeTab, currentCoords, activeReroute]);
 
   // Clean up map when component unmounts
   useEffect(() => {
@@ -381,7 +456,6 @@ export const DriverMobileApp: React.FC<DriverMobileAppProps> = ({
             }
           }
 
-          // Transmit live telemetry to FastAPI backend
           sendDriverTelemetry({
             driverId: driverName,
             truckId: truckId,
@@ -408,7 +482,7 @@ export const DriverMobileApp: React.FC<DriverMobileAppProps> = ({
     }
   };
 
-  // Highway Driving Simulation Mode (Moves along NH48 toward Delhi)
+  // Highway Driving Simulation Mode
   const toggleSimulatedDrive = () => {
     if (isSimulatingDrive) {
       if (simIntervalRef.current) clearInterval(simIntervalRef.current);
@@ -417,10 +491,11 @@ export const DriverMobileApp: React.FC<DriverMobileAppProps> = ({
       setIsSimulatingDrive(true);
       simIntervalRef.current = setInterval(() => {
         setCurrentCoords(prev => {
-          // Increment North-East along NH48 corridor
-          const newLat = Number((prev.lat + 0.006).toFixed(4));
-          const newLng = Number((prev.lng + 0.003).toFixed(4));
-          const simulatedSpeed = Math.floor(Math.random() * 12) + 56; // 56 - 68 km/h
+          const isDetour = activeReroute && activeReroute.status === 'ACCEPTED';
+          // Progress along highway or detour
+          const newLat = Number((prev.lat + (isDetour ? 0.007 : 0.006)).toFixed(4));
+          const newLng = Number((prev.lng + (isDetour ? 0.004 : 0.003)).toFixed(4));
+          const simulatedSpeed = Math.floor(Math.random() * 12) + 56;
           setSpeedKmh(simulatedSpeed);
           setHeading(32);
 
@@ -453,7 +528,7 @@ export const DriverMobileApp: React.FC<DriverMobileAppProps> = ({
   const handleDutyChange = async (newStatus: string) => {
     setDutyStatus(newStatus);
     if (newStatus === 'MANDATORY_REST_BREAK') {
-      setBreakTimerSeconds(45 * 60); // 45 minutes mandatory break
+      setBreakTimerSeconds(45 * 60);
       setIsBreakTimerActive(true);
       setSpeedKmh(0);
     } else {
@@ -561,12 +636,15 @@ export const DriverMobileApp: React.FC<DriverMobileAppProps> = ({
     return `${minutes}m ${secs.toString().padStart(2, '0')}s`;
   };
 
+  const isDetourActive = activeReroute && activeReroute.status === 'ACCEPTED';
+  const hasProposedReroute = activeReroute && activeReroute.status === 'PROPOSED' && !rerouteAlertDismissed;
+
   return (
     <div className={`min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans select-none ${
       isEmbedded ? 'rounded-2xl overflow-hidden border border-slate-800' : ''
     }`}>
       
-      {/* 1. TOP MOBILE STATUS BAR (Phone Hardware Look) */}
+      {/* 1. TOP MOBILE STATUS BAR */}
       <div className="bg-slate-950/90 backdrop-blur-md px-4 pt-2.5 pb-2 flex items-center justify-between border-b border-slate-900 sticky top-0 z-40 text-xs">
         <div className="flex items-center gap-2">
           <span className="font-semibold text-slate-200 tracking-tight text-[13px]">{currentTime}</span>
@@ -640,7 +718,71 @@ export const DriverMobileApp: React.FC<DriverMobileAppProps> = ({
         </span>
       </div>
 
-      {/* 3. MAIN TAB CONTENT AREA */}
+      {/* 3. CLOSED-LOOP REROUTE NOTIFICATION POPUP (Triggered when HQ approves detour) */}
+      {hasProposedReroute && (
+        <div className="mx-3 mt-3 p-3.5 bg-gradient-to-r from-amber-950 via-slate-900 to-amber-950 border-2 border-amber-500 rounded-2xl shadow-2xl animate-in slide-in-from-top-2 duration-300">
+          <div className="flex items-start justify-between">
+            <div className="flex items-center gap-2">
+              <span className="relative flex h-3 w-3">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-500"></span>
+              </span>
+              <span className="text-[11px] font-extrabold uppercase tracking-wider text-amber-300 flex items-center gap-1">
+                <AlertTriangle className="w-3.5 h-3.5" />
+                HQ Real-Time Detour Advisory
+              </span>
+            </div>
+            <span className="text-[9px] font-mono text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700">
+              {activeReroute.approvedBy || 'Approved by HQ'}
+            </span>
+          </div>
+
+          <div className="mt-2 space-y-1">
+            <h4 className="text-sm font-bold text-white leading-snug">
+              {activeReroute.strategyName || 'Bypass Detour via SH-188'}
+            </h4>
+            <p className="text-[11px] text-slate-300 leading-relaxed">
+              {activeReroute.reason}: Narmada bridge flooded on NH-48. HQ optimizer has approved bypass via SH-188 & Ankleshwar Ring.
+            </p>
+            <div className="flex items-center gap-3 text-[10px] font-mono text-amber-300 pt-1">
+              <span className="font-bold">+{activeReroute.addedKm || 48} km</span>
+              <span>•</span>
+              <span className="font-bold">+{activeReroute.etaDelayMinutes || 45} min ETA</span>
+              <span>•</span>
+              <span className="text-emerald-400 font-semibold">Toll Pass Synced</span>
+            </div>
+          </div>
+
+          <div className="mt-3 flex gap-2">
+            <button
+              type="button"
+              onClick={handleAcceptReroute}
+              disabled={isAcceptingReroute}
+              className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 shadow-lg transition-all"
+            >
+              <Check className="w-4 h-4" />
+              <span>{isAcceptingReroute ? 'Activating Detour...' : 'ACCEPT DETOUR ROUTE'}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setRerouteAlertDismissed(true)}
+              className="px-3 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold"
+            >
+              Dismiss
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Reroute Active Confirmation Toast */}
+      {rerouteSuccessToast && (
+        <div className="mx-3 mt-2 px-3 py-2 bg-emerald-950 border border-emerald-700 rounded-xl text-xs text-emerald-200 font-bold flex items-center gap-2 shadow-lg animate-in fade-in">
+          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+          <span>{rerouteSuccessToast}</span>
+        </div>
+      )}
+
+      {/* 4. MAIN TAB CONTENT AREA */}
       <div className="flex-1 overflow-y-auto pb-24">
         
         {/* ================= TAB 1: NAVIGATION & GPS ================= */}
@@ -650,11 +792,17 @@ export const DriverMobileApp: React.FC<DriverMobileAppProps> = ({
             {/* Turn-by-Turn Instruction Banner */}
             <div className="bg-slate-900 border-b border-slate-800 p-3.5 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-sky-600 text-white flex items-center justify-center shadow-md shrink-0">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-md shrink-0 ${
+                  isDetourActive ? 'bg-emerald-600 text-white' : 'bg-sky-600 text-white'
+                }`}>
                   <Navigation className="w-5 h-5" />
                 </div>
                 <div>
-                  <div className="text-[11px] text-sky-400 font-semibold uppercase tracking-wide">Next Maneuver • NH-48</div>
+                  <div className={`text-[11px] font-semibold uppercase tracking-wide ${
+                    isDetourActive ? 'text-emerald-400' : 'text-sky-400'
+                  }`}>
+                    {isDetourActive ? 'Detour Route • SH-188 Bypass' : 'Next Maneuver • NH-48'}
+                  </div>
                   <div className="text-xs font-bold text-white leading-tight mt-0.5">
                     {tripData?.nextManoeuvre || 'In 4.2 km, continue on NH48 toward Bharuch bypass'}
                   </div>
@@ -662,9 +810,27 @@ export const DriverMobileApp: React.FC<DriverMobileAppProps> = ({
               </div>
               <div className="text-right shrink-0">
                 <div className="text-xs font-bold text-white font-mono">{tripData?.remainingKm || 840} km</div>
-                <div className="text-[10px] text-slate-400">Remaining</div>
+                <div className="text-[10px] text-slate-400">ETA: {tripData?.eta || '08:30 AM'}</div>
               </div>
             </div>
+
+            {/* Active Detour Pill & Reset Option */}
+            {isDetourActive && (
+              <div className="mx-3 px-3 py-2 bg-emerald-950/70 border border-emerald-800 rounded-xl flex items-center justify-between text-xs">
+                <div className="flex items-center gap-2 text-emerald-300 font-bold">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Navigating Approved SH-188 Detour</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleResetDetour}
+                  className="text-[10px] text-slate-400 hover:text-white underline font-mono flex items-center gap-1"
+                >
+                  <RotateCcw className="w-2.5 h-2.5" />
+                  <span>Reset Route</span>
+                </button>
+              </div>
+            )}
 
             {/* Live GPS Map Viewport */}
             <div className="px-3">
@@ -677,7 +843,7 @@ export const DriverMobileApp: React.FC<DriverMobileAppProps> = ({
                     type="button"
                     onClick={() => {
                       if (mapInstanceRef.current) {
-                        mapInstanceRef.current.setView([currentCoords.lat, currentCoords.lng], 13);
+                        mapInstanceRef.current.setView([currentCoords.lat, currentCoords.lng], 12);
                       }
                     }}
                     className="w-8 h-8 rounded-lg bg-slate-900/90 text-slate-200 border border-slate-700 flex items-center justify-center hover:bg-slate-800 transition-colors shadow-md"
@@ -702,7 +868,7 @@ export const DriverMobileApp: React.FC<DriverMobileAppProps> = ({
               </div>
             </div>
 
-            {/* GPS Hardware Controls & Simulator Toggle */}
+            {/* GPS Controls & Closed-Loop Demonstration Tools */}
             <div className="px-3 space-y-2">
               <div className="bg-slate-900 border border-slate-800 rounded-2xl p-3 space-y-2.5">
                 <div className="flex items-center justify-between">
@@ -711,7 +877,7 @@ export const DriverMobileApp: React.FC<DriverMobileAppProps> = ({
                       <Radio className={`w-3.5 h-3.5 ${isPhoneGpsActive ? 'text-emerald-400 animate-pulse' : 'text-slate-400'}`} />
                       <span>Phone Hardware GPS Stream</span>
                     </div>
-                    <div className="text-[10px] text-slate-400">Streams live phone latitude/longitude to HQ Control Center</div>
+                    <div className="text-[10px] text-slate-400">Transmits real coordinates directly to HQ Control Center</div>
                   </div>
                   <button
                     type="button"
@@ -732,25 +898,34 @@ export const DriverMobileApp: React.FC<DriverMobileAppProps> = ({
                   </div>
                 )}
 
-                {/* Simulated Highway Drive Button (For reviewer desk testing) */}
-                <div className="pt-2 border-t border-slate-800 flex items-center justify-between">
-                  <span className="text-[11px] text-slate-400">Indoor / Desk Testing Mode:</span>
+                {/* Demo Reroute & Simulation Controls */}
+                <div className="pt-2 border-t border-slate-800 flex items-center justify-between gap-2">
                   <button
                     type="button"
                     onClick={toggleSimulatedDrive}
-                    className={`text-xs font-bold px-2.5 py-1 rounded-lg border transition-colors flex items-center gap-1 ${
+                    className={`text-xs font-bold px-2.5 py-1.5 rounded-xl border transition-colors flex items-center gap-1.5 ${
                       isSimulatingDrive 
                         ? 'bg-amber-950 text-amber-300 border-amber-800' 
                         : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-750'
                     }`}
                   >
                     <Play className={`w-3 h-3 ${isSimulatingDrive ? 'fill-current' : ''}`} />
-                    <span>{isSimulatingDrive ? 'Stop Highway Sim' : 'Simulate Highway Run'}</span>
+                    <span>{isSimulatingDrive ? 'Stop Highway Sim' : 'Simulate Drive'}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleSimulateHqReroutePush}
+                    className="text-xs font-bold px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-900/60 transition-colors flex items-center gap-1.5"
+                    title="Simulate HQ approving a detour on the dashboard"
+                  >
+                    <AlertTriangle className="w-3 h-3 text-amber-400" />
+                    <span>Trigger HQ Reroute</span>
                   </button>
                 </div>
               </div>
 
-              {/* Corridor Weather & Waterlogging Alert Banner */}
+              {/* Corridor Hazard Bulletin */}
               {tripData?.hazardAlert && (
                 <div className="bg-amber-950/40 border border-amber-800/80 rounded-2xl p-3 flex items-start gap-2.5">
                   <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
@@ -766,20 +941,20 @@ export const DriverMobileApp: React.FC<DriverMobileAppProps> = ({
                 </div>
               )}
 
-              {/* Corridor Route Progression Stepper */}
+              {/* Active Route Stepper */}
               <div className="bg-slate-900 border border-slate-800 rounded-2xl p-3 space-y-2">
                 <div className="text-xs font-bold text-slate-300 flex items-center justify-between">
-                  <span>Assigned Corridor: {routeCode}</span>
-                  <span className="text-[10px] text-slate-400">Total: 1,450 km</span>
+                  <span>Assigned Corridor: {isDetourActive ? 'SH-188 Detour Corridor' : routeCode}</span>
+                  <span className="text-[10px] text-slate-400">Total: {tripData?.totalDistanceKm || 1450} km</span>
                 </div>
                 <div className="space-y-1.5">
-                  {[
+                  {(tripData?.waypoints || [
                     { name: 'Pune Chakan DC', city: 'Pune', status: 'completed' },
                     { name: 'Bhiwandi Central Hub', city: 'Mumbai', status: 'completed' },
                     { name: 'Bharuch Narmada Causeway', city: 'Bharuch', status: 'current' },
                     { name: 'Ahmedabad Sanand Hub', city: 'Ahmedabad', status: 'upcoming' },
                     { name: 'Delhi NCR Regional DC', city: 'Gurgaon', status: 'upcoming' }
-                  ].map((wp, i) => (
+                  ]).map((wp: any, i: number) => (
                     <div key={i} className="flex items-center justify-between text-xs py-1 border-b border-slate-800/50 last:border-0">
                       <div className="flex items-center gap-2">
                         <div className={`w-2 h-2 rounded-full ${
@@ -1213,7 +1388,7 @@ export const DriverMobileApp: React.FC<DriverMobileAppProps> = ({
 
       </div>
 
-      {/* 4. PERSISTENT MOBILE BOTTOM NAVIGATION BAR */}
+      {/* 5. PERSISTENT MOBILE BOTTOM NAVIGATION BAR */}
       <div className="fixed bottom-0 left-0 right-0 z-40 bg-slate-950/95 backdrop-blur-lg border-t border-slate-900 px-2 py-1.5 flex items-center justify-around text-xs shadow-2xl safe-bottom">
         
         <button
@@ -1221,7 +1396,7 @@ export const DriverMobileApp: React.FC<DriverMobileAppProps> = ({
           onClick={() => setActiveTab('nav')}
           className={`flex-1 py-1.5 flex flex-col items-center gap-1 rounded-xl transition-all ${
             activeTab === 'nav' 
-              ? 'text-sky-400 font-bold' 
+              ? (isDetourActive ? 'text-emerald-400 font-bold' : 'text-sky-400 font-bold')
               : 'text-slate-400 hover:text-slate-200'
           }`}
         >

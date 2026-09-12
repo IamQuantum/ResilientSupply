@@ -338,12 +338,20 @@ def record_approval(incident_id: str, payload: ApprovalRequest, db: Session = De
     db.commit()
 
     dispatch_info = None
+    reroute_push = None
     if payload.decision in ["APPROVED", "MODIFIED"]:
         dispatch_info = dispatch_engine.generate_eway_bill(
             db=db,
             incident_id=incident_id,
             strategy_id=payload.strategyId,
             carrier_name=payload.carrierOverride or "TCI Express",
+            notes=payload.humanNotes
+        )
+        # Closed-loop: Push live reroute to driver mobile companion
+        reroute_push = telemetry_engine.push_reroute_to_fleet(
+            incident_id=incident_id,
+            strategy_id=payload.strategyId,
+            carrier=payload.carrierOverride or "Allcargo Logistics Express",
             notes=payload.humanNotes
         )
 
@@ -777,6 +785,41 @@ def submit_driver_inspection(req: DriverInspectionRequest):
         truck_id=req.truckId,
         data=req.model_dump()
     )
+
+class PushRerouteRequest(BaseModel):
+    truckId: Optional[str] = "MH-04-GP-8821"
+    incidentId: Optional[str] = "disr-01"
+    strategyId: Optional[str] = "strat-b"
+    carrier: Optional[str] = "Allcargo Logistics Express"
+    notes: Optional[str] = "Narmada bridge waterlogging detour via SH-188"
+
+class AcceptRerouteRequest(BaseModel):
+    truckId: str = "MH-04-GP-8821"
+    rerouteId: str
+
+@app.post("/api/driver/reroute/push")
+def push_driver_reroute(req: PushRerouteRequest):
+    """Broadcasts a dynamic detour / reroute advisory from HQ to the driver mobile app."""
+    return telemetry_engine.push_reroute_to_fleet(
+        incident_id=req.incidentId or "disr-01",
+        strategy_id=req.strategyId or "strat-b",
+        carrier=req.carrier or "Allcargo Logistics Express",
+        notes=req.notes
+    )
+
+@app.post("/api/driver/reroute/accept")
+def accept_driver_reroute(req: AcceptRerouteRequest):
+    """Driver accepts the proposed detour on their smartphone, activating the new navigation route."""
+    return telemetry_engine.accept_reroute(
+        truck_id=req.truckId,
+        reroute_id=req.rerouteId
+    )
+
+@app.post("/api/driver/reroute/reset")
+def reset_driver_reroute(truckId: Optional[str] = "MH-04-GP-8821"):
+    """Resets reroute back to standard arterial corridor."""
+    return telemetry_engine.reset_reroute(truck_id=truckId or "MH-04-GP-8821")
+
 
 
 
