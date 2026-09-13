@@ -29,4 +29,4 @@ ENV HOST=0.0.0.0
 ENV PORT=8000
 ENV PYTHONPATH=/app/backend
 
-CMD ["python", "-m", "uvicorn", "app.main:app", "--app-dir", "/app/backend", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["sh", "-c", "python -m uvicorn app.main:app --app-dir /app/backend --host 0.0.0.0 --port ${PORT:-8000}"]

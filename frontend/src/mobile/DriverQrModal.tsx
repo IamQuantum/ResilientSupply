@@ -13,7 +13,9 @@ import {
   ShieldCheck,
   RefreshCw,
   Radio,
-  Maximize2
+  Globe,
+  Cloud,
+  Terminal
 } from 'lucide-react';
 import QRCode from 'qrcode';
 import { fetchHostInfo } from '../services/api';
@@ -30,14 +32,15 @@ export const DriverQrModal: React.FC<DriverQrModalProps> = ({
   onClose,
   assignedRouteCode = 'PUN-DEL-EXP'
 }) => {
-  // Default to 'simulator' so user/presenter can immediately interact without phone pairing
-  const [modalMode, setModalMode] = useState<'simulator' | 'qr'>('simulator');
+  // Modes: 'simulator' | 'qr' | 'remote'
+  const [modalMode, setModalMode] = useState<'simulator' | 'qr' | 'remote'>('simulator');
   const [qrDataUrl, setQrDataUrl] = useState<string>('');
   const [mobileUrl, setMobileUrl] = useState<string>('');
+  const [remotePublicUrl, setRemotePublicUrl] = useState<string>('');
   const [copied, setCopied] = useState<boolean>(false);
+  const [copiedCommand, setCopiedCommand] = useState<boolean>(false);
   const [customIp, setCustomIp] = useState<string>('');
   const [selectedPort, setSelectedPort] = useState<string>('5173');
-  const [loading, setLoading] = useState<boolean>(false);
 
   const generateQrForUrl = useCallback(async (targetUrl: string) => {
     try {
@@ -53,7 +56,6 @@ export const DriverQrModal: React.FC<DriverQrModalProps> = ({
   }, []);
 
   const initHostInfo = useCallback(async () => {
-    // 1. Instant synchronous fallback using window location
     const defaultHost = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
     const defaultPort = (typeof window !== 'undefined' && window.location.port) ? window.location.port : '5173';
     setSelectedPort(defaultPort);
@@ -63,7 +65,6 @@ export const DriverQrModal: React.FC<DriverQrModalProps> = ({
     setMobileUrl(initialUrl);
     await generateQrForUrl(initialUrl);
 
-    // 2. Query backend to obtain local LAN IP if running on localhost
     try {
       const info = await fetchHostInfo();
       if (info && info.localIp && info.localIp !== '127.0.0.1') {
@@ -94,6 +95,21 @@ export const DriverQrModal: React.FC<DriverQrModalProps> = ({
     await generateQrForUrl(url);
   };
 
+  const handleApplyPublicUrl = async (publicUrlInput: string) => {
+    let clean = publicUrlInput.trim();
+    if (clean && !clean.startsWith('http://') && !clean.startsWith('https://')) {
+      clean = `https://${clean}`;
+    }
+    if (clean && !clean.includes('/driver')) {
+      clean = clean.replace(/\/+$/, '') + '/driver';
+    }
+    setRemotePublicUrl(publicUrlInput);
+    if (clean) {
+      setMobileUrl(clean);
+      await generateQrForUrl(clean);
+    }
+  };
+
   const handleCopyLink = () => {
     if (navigator.clipboard) {
       navigator.clipboard.writeText(mobileUrl);
@@ -102,8 +118,16 @@ export const DriverQrModal: React.FC<DriverQrModalProps> = ({
     }
   };
 
+  const handleCopyTunnelCmd = (cmd: string) => {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(cmd);
+      setCopiedCommand(true);
+      setTimeout(() => setCopiedCommand(false), 2000);
+    }
+  };
+
   const handleOpenDedicatedTab = () => {
-    window.open('/driver', '_blank');
+    window.open(mobileUrl || '/driver', '_blank');
   };
 
   if (!isOpen) return null;
@@ -125,7 +149,7 @@ export const DriverQrModal: React.FC<DriverQrModalProps> = ({
                 ResilientChain Driver Mobile Companion
               </h3>
               <p className="text-[11px] text-slate-400">
-                PWA • Interactive On-Screen Phone & Physical Mobile Pairing
+                PWA • Simulator • Local Wi-Fi • Remote 5G / Cloud Access
               </p>
             </div>
           </div>
@@ -133,7 +157,7 @@ export const DriverQrModal: React.FC<DriverQrModalProps> = ({
             <button
               type="button"
               onClick={handleOpenDedicatedTab}
-              title="Open full page in new tab (/driver)"
+              title="Open standalone page (/driver)"
               className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors flex items-center gap-1 text-xs"
             >
               <ExternalLink className="w-4 h-4" />
@@ -149,50 +173,64 @@ export const DriverQrModal: React.FC<DriverQrModalProps> = ({
         </div>
 
         {/* Mode Selector Tabs */}
-        <div className="px-5 pt-3 pb-2 border-b border-slate-800 flex gap-4 text-xs font-bold bg-slate-900">
+        <div className="px-5 pt-3 pb-2 border-b border-slate-800 flex gap-4 text-xs font-bold bg-slate-900 overflow-x-auto">
           <button
             type="button"
             onClick={() => setModalMode('simulator')}
-            className={`pb-1.5 border-b-2 transition-colors flex items-center gap-1.5 ${
+            className={`pb-1.5 border-b-2 transition-colors flex items-center gap-1.5 whitespace-nowrap ${
               modalMode === 'simulator'
                 ? 'border-emerald-400 text-emerald-400'
                 : 'border-transparent text-slate-400 hover:text-slate-200'
             }`}
           >
             <Play className="w-3.5 h-3.5 fill-current" />
-            <span>Interactive Phone Simulator</span>
+            <span>Interactive Simulator</span>
           </button>
 
           <button
             type="button"
-            onClick={() => setModalMode('qr')}
-            className={`pb-1.5 border-b-2 transition-colors flex items-center gap-1.5 ${
+            onClick={() => {
+              setModalMode('qr');
+              handleUpdateIpAndPort(customIp, selectedPort);
+            }}
+            className={`pb-1.5 border-b-2 transition-colors flex items-center gap-1.5 whitespace-nowrap ${
               modalMode === 'qr'
                 ? 'border-emerald-400 text-emerald-400'
                 : 'border-transparent text-slate-400 hover:text-slate-200'
             }`}
           >
-            <QrCode className="w-3.5 h-3.5" />
-            <span>Launch on Real Smartphone (QR Code)</span>
+            <Wifi className="w-3.5 h-3.5" />
+            <span>Local Wi-Fi Pairing</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setModalMode('remote')}
+            className={`pb-1.5 border-b-2 transition-colors flex items-center gap-1.5 whitespace-nowrap ${
+              modalMode === 'remote'
+                ? 'border-emerald-400 text-emerald-400'
+                : 'border-transparent text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <Globe className="w-3.5 h-3.5" />
+            <span>Remote 5G / Public Cloud (Any Network)</span>
           </button>
         </div>
 
         {/* TAB 1: INTERACTIVE ON-SCREEN SIMULATOR */}
         {modalMode === 'simulator' && (
           <div className="flex-1 overflow-hidden p-3 bg-slate-950 flex flex-col items-center justify-center">
-            {/* Phone Chassis Frame */}
             <div className="w-full max-w-sm h-full bg-slate-950 rounded-3xl border-2 border-slate-800 shadow-2xl overflow-hidden flex flex-col relative">
               <DriverMobileApp isEmbedded={true} defaultTruckId="MH-04-GP-8821" />
             </div>
           </div>
         )}
 
-        {/* TAB 2: QR CODE & REAL PHONE PAIRING */}
+        {/* TAB 2: LOCAL WI-FI PAIRING */}
         {modalMode === 'qr' && (
           <div className="p-6 space-y-5 overflow-y-auto">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
               
-              {/* QR Code Canvas Card */}
               <div className="bg-white p-5 rounded-2xl flex flex-col items-center justify-center shadow-lg border border-slate-200 text-center">
                 {qrDataUrl ? (
                   <img 
@@ -210,20 +248,18 @@ export const DriverQrModal: React.FC<DriverQrModalProps> = ({
                   Scan with iPhone / Android Camera
                 </div>
                 <div className="text-[11px] text-slate-500 mt-0.5">
-                  Point camera to launch standalone PWA
+                  Smartphone must be on same Wi-Fi
                 </div>
               </div>
 
-              {/* Instructions & Manual Link */}
               <div className="space-y-4 text-xs">
                 <div>
-                  <h4 className="font-bold text-white text-sm mb-1">Instant Mobile App Launch</h4>
+                  <h4 className="font-bold text-white text-sm mb-1">Local Network Pairing</h4>
                   <p className="text-slate-400 leading-relaxed">
-                    Point any smartphone camera at this code to open the driver portal. Functions as an installable <strong>PWA</strong> with real GPS streaming, offline storage, turn-by-turn speech guidance, and digital GST e-Way bills.
+                    Connect your phone to the same Wi-Fi hotspot or local subnet to test real HTML5 Geolocation and e-Way bills directly from this computer.
                   </p>
                 </div>
 
-                {/* Direct Link / Copy Box */}
                 <div className="space-y-1.5">
                   <span className="text-[11px] text-slate-400 font-semibold block">Mobile Direct URL:</span>
                   <div className="flex items-center gap-1.5 bg-slate-950 border border-slate-800 rounded-xl p-1.5">
@@ -253,7 +289,6 @@ export const DriverQrModal: React.FC<DriverQrModalProps> = ({
                   </div>
                 </div>
 
-                {/* Port Selector (Dev vs Unified Single-Port) */}
                 <div className="space-y-1.5">
                   <span className="text-[11px] text-slate-400 block">Select Active Server Port:</span>
                   <div className="flex gap-2">
@@ -282,7 +317,6 @@ export const DriverQrModal: React.FC<DriverQrModalProps> = ({
                   </div>
                 </div>
 
-                {/* IP Configuration (if phone is on another subnet) */}
                 <div className="space-y-1.5">
                   <span className="text-[11px] text-slate-400 block">Host Network IP:</span>
                   <div className="flex items-center gap-2">
@@ -302,22 +336,95 @@ export const DriverQrModal: React.FC<DriverQrModalProps> = ({
                     </button>
                   </div>
                 </div>
+              </div>
 
-                {/* Features Highlights */}
-                <div className="space-y-1 text-slate-300 bg-slate-950/50 p-2.5 rounded-xl border border-slate-800/80">
-                  <div className="flex items-center gap-2 text-[11px]">
-                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                    <span>Hardware HTML5 Geolocation streaming to Central Map</span>
+            </div>
+          </div>
+        )}
+
+        {/* TAB 3: REMOTE 5G / PUBLIC CLOUD (ANY NETWORK) */}
+        {modalMode === 'remote' && (
+          <div className="p-6 space-y-5 overflow-y-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+              
+              <div className="bg-white p-5 rounded-2xl flex flex-col items-center justify-center shadow-lg border border-slate-200 text-center">
+                {qrDataUrl ? (
+                  <img 
+                    src={qrDataUrl} 
+                    alt="Public Driver QR Code" 
+                    className="w-56 h-56 rounded-lg object-contain"
+                  />
+                ) : (
+                  <div className="w-56 h-56 flex items-center justify-center text-slate-400 text-xs">
+                    Paste URL to Generate QR...
                   </div>
-                  <div className="flex items-center gap-2 text-[11px]">
-                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                    <span>Official GST e-Way Bill full-brightness QR for checkposts</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-[11px]">
-                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                    <span>Driver duty shifts, rest countdown & pre-trip vehicle checklist</span>
+                )}
+                
+                <div className="mt-3 text-slate-800 text-xs font-extrabold uppercase tracking-wide">
+                  Scan Anywhere via 4G / 5G / LTE
+                </div>
+                <div className="text-[11px] text-slate-500 mt-0.5">
+                  No shared Wi-Fi needed • Secure HTTPS
+                </div>
+              </div>
+
+              <div className="space-y-4 text-xs">
+                <div>
+                  <h4 className="font-bold text-white text-sm mb-1 flex items-center gap-1.5">
+                    <Globe className="w-4 h-4 text-emerald-400" />
+                    Public Cloud / Tunnel Access
+                  </h4>
+                  <p className="text-slate-400 leading-relaxed">
+                    Use this when your smartphone is on cellular data or another Wi-Fi network. Paste your <strong>public tunnel</strong> or <strong>deployed cloud domain</strong> below to immediately generate a worldwide pairing QR.
+                  </p>
+                </div>
+
+                <div className="space-y-1.5">
+                  <span className="text-[11px] text-slate-400 font-semibold block">Enter Public / Tunnel URL:</span>
+                  <div className="flex items-center gap-2">
+                    <input 
+                      type="text" 
+                      value={remotePublicUrl}
+                      onChange={(e) => handleApplyPublicUrl(e.target.value)}
+                      placeholder="e.g. https://your-app.trycloudflare.com or https://resilientsupply.onrender.com"
+                      className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-white font-mono focus:outline-none focus:border-emerald-500 flex-1"
+                    />
                   </div>
                 </div>
+
+                {/* Instant Tunnel Quick Guide Card */}
+                <div className="bg-slate-950/80 border border-slate-800 rounded-2xl p-3 space-y-2">
+                  <div className="font-bold text-slate-200 text-xs flex items-center gap-1.5">
+                    <Terminal className="w-3.5 h-3.5 text-sky-400" />
+                    <span>Instant 30s Free Tunnel Command:</span>
+                  </div>
+                  <div className="bg-slate-900 rounded-lg p-2 font-mono text-[11px] text-emerald-300 flex items-center justify-between border border-slate-800">
+                    <span>npx localtunnel --port 8000</span>
+                    <button
+                      type="button"
+                      onClick={() => handleCopyTunnelCmd('npx localtunnel --port 8000')}
+                      className="text-slate-400 hover:text-white p-1"
+                      title="Copy command"
+                    >
+                      {copiedCommand ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                    </button>
+                  </div>
+                  <p className="text-[10px] text-slate-400 leading-normal">
+                    Run this in terminal to generate a public HTTPS tunnel. Paste the resulting URL above!
+                  </p>
+                </div>
+
+                <div className="space-y-1 text-slate-300 bg-slate-950/50 p-2.5 rounded-xl border border-slate-800/80 text-[11px]">
+                  <div className="flex items-center gap-2">
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                    <span>HTTPS enables native phone GPS & speech recognition</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                    <span>Permanent cloud deployment: Render, Railway, or Docker</span>
+                  </div>
+                </div>
+
               </div>
 
             </div>
