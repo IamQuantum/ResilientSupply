@@ -480,6 +480,9 @@ export const DriverMobileApp: React.FC<DriverMobileAppProps> = ({
         : standardCorridorCoords;
 
     if (!mapInstanceRef.current) {
+      if ((mapContainerRef.current as any)?._leaflet_id) {
+        (mapContainerRef.current as any)._leaflet_id = null;
+      }
       const map = L.map(mapContainerRef.current, {
         center: [currentCoords.lat, currentCoords.lng],
         zoom: 11,

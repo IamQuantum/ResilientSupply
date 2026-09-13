@@ -433,12 +433,41 @@ class TelemetryEngine:
                 next_manoeuvre = active_reroute["newManoeuvre"]
                 next_manoeuvre_hi = "Aage 1.8 kilometer chalkar SH-188 bypass exit lein"
 
-        # Standard corridor road-snapped polyline
-        if not hasattr(self, "_standard_road_cache"):
-            try:
-                self._standard_road_cache = calculate_road_route(18.7606, 73.8643, 28.4908, 77.0906)
-            except Exception:
-                self._standard_road_cache = None
+        # Standard corridor road-snapped polyline (non-blocking instant return)
+        if not hasattr(self, "_standard_road_cache") or self._standard_road_cache is None:
+            self._standard_road_cache = {
+                "distanceKm": 1420.5,
+                "durationHours": 24.5,
+                "polyline": [
+                    [18.7606, 73.8643], # Pune Chakan
+                    [19.2967, 73.0620], # Bhiwandi
+                    [20.5050, 72.9300], # Vapi
+                    [21.1702, 72.8311], # Surat
+                    [21.7051, 72.9959], # Bharuch Bridge
+                    [22.3072, 73.1812], # Vadodara
+                    [22.9868, 72.3814], # Ahmedabad Sanand
+                    [24.5854, 73.7125], # Udaipur
+                    [26.9124, 75.7873], # Jaipur
+                    [28.4595, 77.0266], # Gurgaon
+                    [28.6139, 77.2090]  # Delhi NCR
+                ],
+                "steps": [
+                    {"manoeuvre": "Head north from Pune Chakan toward NH-48", "distanceKm": 45.0, "durationMin": 52.0},
+                    {"manoeuvre": "Continue on NH-48 through Bhiwandi and Vapi", "distanceKm": 380.0, "durationMin": 360.0},
+                    {"manoeuvre": "Follow NH-48 toward Bharuch and Vadodara", "distanceKm": 210.0, "durationMin": 220.0},
+                    {"manoeuvre": "Take National Highway 48 North to Jaipur & Delhi NCR", "distanceKm": 785.5, "durationMin": 720.0}
+                ]
+            }
+            # Asynchronously refresh high-res road-snapped geometry in background without blocking API
+            import threading
+            def _async_refresh_road():
+                try:
+                    res = calculate_road_route(18.7606, 73.8643, 28.4908, 77.0906)
+                    if res and res.get("polyline"):
+                        self._standard_road_cache = res
+                except Exception:
+                    pass
+            threading.Thread(target=_async_refresh_road, daemon=True).start()
 
         road_poly = self._standard_road_cache.get("polyline") if self._standard_road_cache else None
         road_steps = self._standard_road_cache.get("steps") if self._standard_road_cache else []

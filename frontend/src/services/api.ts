@@ -4,13 +4,16 @@
  */
 
 export const getApiBase = () => {
-  if (typeof window !== 'undefined' && window.location.hostname) {
-    return `http://${window.location.hostname}:8000/api`;
+  if (typeof window !== 'undefined') {
+    // In browser, relative /api works seamlessly with Vite dev proxy (5173 -> 8000)
+    // AND with FastAPI single-port production server (8000).
+    // This avoids cross-port firewall blockage, CORS, or mobile LAN localhost confusion.
+    return '/api';
   }
   return 'http://localhost:8000/api';
 };
 
-const API_BASE = getApiBase();
+export const API_BASE = getApiBase();
 
 export async function fetchHealth() {
   try {

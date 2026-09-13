@@ -14,6 +14,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { CustomRoleInfo, UserProfile } from '../types';
+import { API_BASE } from '../services/api';
 
 interface WorkforceModalProps {
   isOpen: boolean;
@@ -59,8 +60,8 @@ export const WorkforceModal: React.FC<WorkforceModalProps> = ({
     setLoading(true);
     try {
       const [wRes, rRes] = await Promise.all([
-        fetch(`http://localhost:8000/api/workforce/${orgId}`),
-        fetch(`http://localhost:8000/api/roles/${orgId}`)
+        fetch(`${API_BASE}/workforce/${orgId}`),
+        fetch(`${API_BASE}/roles/${orgId}`)
       ]);
       if (wRes.ok) {
         const wData = await wRes.json();
@@ -90,7 +91,7 @@ export const WorkforceModal: React.FC<WorkforceModalProps> = ({
     e.preventDefault();
     if (!inviteName || !inviteEmail || !inviteRole) return;
     try {
-      const res = await fetch('http://localhost:8000/api/workforce/invite', {
+      const res = await fetch(`${API_BASE}/workforce/invite`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -122,7 +123,7 @@ export const WorkforceModal: React.FC<WorkforceModalProps> = ({
     e.preventDefault();
     if (!newRoleName) return;
     try {
-      const res = await fetch('http://localhost:8000/api/roles', {
+      const res = await fetch(`${API_BASE}/roles`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

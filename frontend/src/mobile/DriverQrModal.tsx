@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Smartphone, 
   X, 
@@ -11,7 +11,9 @@ import {
   Layers,
   ArrowRight,
   ShieldCheck,
-  RefreshCw
+  RefreshCw,
+  Radio,
+  Maximize2
 } from 'lucide-react';
 import QRCode from 'qrcode';
 import { fetchHostInfo } from '../services/api';
@@ -28,53 +30,68 @@ export const DriverQrModal: React.FC<DriverQrModalProps> = ({
   onClose,
   assignedRouteCode = 'PUN-DEL-EXP'
 }) => {
-  const [modalMode, setModalMode] = useState<'qr' | 'simulator'>('qr');
+  // Default to 'simulator' so user/presenter can immediately interact without phone pairing
+  const [modalMode, setModalMode] = useState<'simulator' | 'qr'>('simulator');
   const [qrDataUrl, setQrDataUrl] = useState<string>('');
   const [mobileUrl, setMobileUrl] = useState<string>('');
   const [copied, setCopied] = useState<boolean>(false);
   const [customIp, setCustomIp] = useState<string>('');
-  const [loading, setLoading] = useState<boolean>(true);
+  const [selectedPort, setSelectedPort] = useState<string>('5173');
+  const [loading, setLoading] = useState<boolean>(false);
 
-  const initHostInfo = async () => {
-    setLoading(true);
+  const generateQrForUrl = useCallback(async (targetUrl: string) => {
     try {
-      const info = await fetchHostInfo();
-      const host = info.localIp || (typeof window !== 'undefined' ? window.location.hostname : 'localhost');
-      setCustomIp(host);
-      const url = `http://${host}:5173/driver`;
-      setMobileUrl(url);
-
-      const qr = await QRCode.toDataURL(url, {
+      const qr = await QRCode.toDataURL(targetUrl, {
         width: 280,
         margin: 2,
         color: { dark: '#020617', light: '#ffffff' }
       });
       setQrDataUrl(qr);
     } catch (e) {
-      console.warn(e);
-    } finally {
-      setLoading(false);
+      console.warn('QR code generation warning:', e);
     }
-  };
+  }, []);
+
+  const initHostInfo = useCallback(async () => {
+    // 1. Instant synchronous fallback using window location
+    const defaultHost = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
+    const defaultPort = (typeof window !== 'undefined' && window.location.port) ? window.location.port : '5173';
+    setSelectedPort(defaultPort);
+    setCustomIp(defaultHost);
+    
+    const initialUrl = `http://${defaultHost}:${defaultPort}/driver`;
+    setMobileUrl(initialUrl);
+    await generateQrForUrl(initialUrl);
+
+    // 2. Query backend to obtain local LAN IP if running on localhost
+    try {
+      const info = await fetchHostInfo();
+      if (info && info.localIp && info.localIp !== '127.0.0.1') {
+        const lanHost = info.localIp;
+        setCustomIp(lanHost);
+        const resolvedUrl = `http://${lanHost}:${defaultPort}/driver`;
+        setMobileUrl(resolvedUrl);
+        await generateQrForUrl(resolvedUrl);
+      }
+    } catch (e) {
+      console.warn('Backend host-info unreachable, using browser host:', e);
+    }
+  }, [generateQrForUrl]);
 
   useEffect(() => {
     if (isOpen) {
       initHostInfo();
     }
-  }, [isOpen]);
+  }, [isOpen, initHostInfo]);
 
-  const handleUpdateIp = async (newIp: string) => {
-    setCustomIp(newIp);
-    const url = `http://${newIp.trim()}:5173/driver`;
+  const handleUpdateIpAndPort = async (newIp: string, newPort: string) => {
+    const trimmedIp = newIp.trim() || 'localhost';
+    const trimmedPort = newPort.trim() || '5173';
+    setCustomIp(trimmedIp);
+    setSelectedPort(trimmedPort);
+    const url = `http://${trimmedIp}:${trimmedPort}/driver`;
     setMobileUrl(url);
-    try {
-      const qr = await QRCode.toDataURL(url, {
-        width: 280,
-        margin: 2,
-        color: { dark: '#020617', light: '#ffffff' }
-      });
-      setQrDataUrl(qr);
-    } catch (e) {}
+    await generateQrForUrl(url);
   };
 
   const handleCopyLink = () => {
@@ -85,16 +102,20 @@ export const DriverQrModal: React.FC<DriverQrModalProps> = ({
     }
   };
 
+  const handleOpenDedicatedTab = () => {
+    window.open('/driver', '_blank');
+  };
+
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150">
       <div className={`bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl overflow-hidden flex flex-col font-sans transition-all ${
-        modalMode === 'simulator' ? 'max-w-md w-full h-[90vh]' : 'max-w-2xl w-full max-h-[90vh]'
+        modalMode === 'simulator' ? 'max-w-md w-full h-[92vh]' : 'max-w-2xl w-full max-h-[92vh]'
       }`}>
         
         {/* Modal Top Header */}
-        <div className="px-5 py-3.5 border-b border-slate-800 flex items-center justify-between bg-slate-950/60">
+        <div className="px-5 py-3.5 border-b border-slate-800 flex items-center justify-between bg-slate-950/80">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-emerald-950 border border-emerald-800 text-emerald-300 flex items-center justify-center">
               <Smartphone className="w-4 h-4" />
@@ -104,20 +125,44 @@ export const DriverQrModal: React.FC<DriverQrModalProps> = ({
                 ResilientChain Driver Mobile Companion
               </h3>
               <p className="text-[11px] text-slate-400">
-                PWA • Connect real smartphone via WiFi or test on-screen simulator
+                PWA • Interactive On-Screen Phone & Physical Mobile Pairing
               </p>
             </div>
           </div>
-          <button 
-            onClick={onClose} 
-            className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleOpenDedicatedTab}
+              title="Open full page in new tab (/driver)"
+              className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors flex items-center gap-1 text-xs"
+            >
+              <ExternalLink className="w-4 h-4" />
+              <span className="hidden sm:inline text-[11px]">Full Page</span>
+            </button>
+            <button 
+              onClick={onClose} 
+              className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* Mode Selector Tabs */}
         <div className="px-5 pt-3 pb-2 border-b border-slate-800 flex gap-4 text-xs font-bold bg-slate-900">
+          <button
+            type="button"
+            onClick={() => setModalMode('simulator')}
+            className={`pb-1.5 border-b-2 transition-colors flex items-center gap-1.5 ${
+              modalMode === 'simulator'
+                ? 'border-emerald-400 text-emerald-400'
+                : 'border-transparent text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <Play className="w-3.5 h-3.5 fill-current" />
+            <span>Interactive Phone Simulator</span>
+          </button>
+
           <button
             type="button"
             onClick={() => setModalMode('qr')}
@@ -128,24 +173,21 @@ export const DriverQrModal: React.FC<DriverQrModalProps> = ({
             }`}
           >
             <QrCode className="w-3.5 h-3.5" />
-            <span>Launch on Physical Smartphone (QR Code)</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setModalMode('simulator')}
-            className={`pb-1.5 border-b-2 transition-colors flex items-center gap-1.5 ${
-              modalMode === 'simulator'
-                ? 'border-emerald-400 text-emerald-400'
-                : 'border-transparent text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            <Play className="w-3.5 h-3.5" />
-            <span>Interactive Phone Simulator</span>
+            <span>Launch on Real Smartphone (QR Code)</span>
           </button>
         </div>
 
-        {/* TAB 1: QR CODE & REAL PHONE INSTRUCTIONS */}
+        {/* TAB 1: INTERACTIVE ON-SCREEN SIMULATOR */}
+        {modalMode === 'simulator' && (
+          <div className="flex-1 overflow-hidden p-3 bg-slate-950 flex flex-col items-center justify-center">
+            {/* Phone Chassis Frame */}
+            <div className="w-full max-w-sm h-full bg-slate-950 rounded-3xl border-2 border-slate-800 shadow-2xl overflow-hidden flex flex-col relative">
+              <DriverMobileApp isEmbedded={true} defaultTruckId="MH-04-GP-8821" />
+            </div>
+          </div>
+        )}
+
+        {/* TAB 2: QR CODE & REAL PHONE PAIRING */}
         {modalMode === 'qr' && (
           <div className="p-6 space-y-5 overflow-y-auto">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
@@ -168,16 +210,16 @@ export const DriverQrModal: React.FC<DriverQrModalProps> = ({
                   Scan with iPhone / Android Camera
                 </div>
                 <div className="text-[11px] text-slate-500 mt-0.5">
-                  Connect phone to same WiFi / Hotspot
+                  Point camera to launch standalone PWA
                 </div>
               </div>
 
               {/* Instructions & Manual Link */}
               <div className="space-y-4 text-xs">
                 <div>
-                  <h4 className="font-bold text-white text-sm mb-1">Instant Smartphone Launch</h4>
+                  <h4 className="font-bold text-white text-sm mb-1">Instant Mobile App Launch</h4>
                   <p className="text-slate-400 leading-relaxed">
-                    Point any smartphone camera at this code to open the driver portal. It functions as a complete <strong>Progressive Web App (PWA)</strong> with real-time GPS streaming, offline mode, and digital e-Way Bill passes.
+                    Point any smartphone camera at this code to open the driver portal. Functions as an installable <strong>PWA</strong> with real GPS streaming, offline storage, turn-by-turn speech guidance, and digital GST e-Way bills.
                   </p>
                 </div>
 
@@ -211,20 +253,49 @@ export const DriverQrModal: React.FC<DriverQrModalProps> = ({
                   </div>
                 </div>
 
+                {/* Port Selector (Dev vs Unified Single-Port) */}
+                <div className="space-y-1.5">
+                  <span className="text-[11px] text-slate-400 block">Select Active Server Port:</span>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleUpdateIpAndPort(customIp, '5173')}
+                      className={`flex-1 py-1.5 px-2.5 rounded-xl text-xs font-bold border transition-colors ${
+                        selectedPort === '5173'
+                          ? 'bg-emerald-950 border-emerald-700 text-emerald-300'
+                          : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200'
+                      }`}
+                    >
+                      Port 5173 (Vite Dev)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleUpdateIpAndPort(customIp, '8000')}
+                      className={`flex-1 py-1.5 px-2.5 rounded-xl text-xs font-bold border transition-colors ${
+                        selectedPort === '8000'
+                          ? 'bg-emerald-950 border-emerald-700 text-emerald-300'
+                          : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200'
+                      }`}
+                    >
+                      Port 8000 (Unified Server)
+                    </button>
+                  </div>
+                </div>
+
                 {/* IP Configuration (if phone is on another subnet) */}
                 <div className="space-y-1.5">
-                  <span className="text-[11px] text-slate-400 block">Host Network IP (Auto-Detected):</span>
+                  <span className="text-[11px] text-slate-400 block">Host Network IP:</span>
                   <div className="flex items-center gap-2">
                     <input
                       type="text"
                       value={customIp}
-                      onChange={(e) => handleUpdateIp(e.target.value)}
+                      onChange={(e) => handleUpdateIpAndPort(e.target.value, selectedPort)}
                       placeholder="e.g. 192.168.1.50"
                       className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-white font-mono focus:outline-none focus:border-slate-600 flex-1"
                     />
                     <button
                       type="button"
-                      onClick={() => handleUpdateIp(customIp)}
+                      onClick={() => handleUpdateIpAndPort(customIp, selectedPort)}
                       className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold rounded-xl transition-colors"
                     >
                       Update QR
@@ -240,7 +311,7 @@ export const DriverQrModal: React.FC<DriverQrModalProps> = ({
                   </div>
                   <div className="flex items-center gap-2 text-[11px]">
                     <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                    <span>Official GST e-Way Bill full-brightness QR for RTO checkposts</span>
+                    <span>Official GST e-Way Bill full-brightness QR for checkposts</span>
                   </div>
                   <div className="flex items-center gap-2 text-[11px]">
                     <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
@@ -253,19 +324,16 @@ export const DriverQrModal: React.FC<DriverQrModalProps> = ({
           </div>
         )}
 
-        {/* TAB 2: INTERACTIVE ON-SCREEN SIMULATOR */}
-        {modalMode === 'simulator' && (
-          <div className="flex-1 overflow-hidden p-3 bg-slate-950 flex flex-col items-center justify-center">
-            {/* iPhone Chassis Frame */}
-            <div className="w-full max-w-sm h-full bg-slate-950 rounded-3xl border-2 border-slate-800 shadow-2xl overflow-hidden flex flex-col relative">
-              <DriverMobileApp isEmbedded={true} defaultTruckId="MH-04-GP-8821" />
-            </div>
-          </div>
-        )}
-
         {/* Footer */}
-        <div className="px-5 py-2.5 bg-slate-950 text-slate-500 text-[10px] text-center border-t border-slate-800">
-          ResilientChain Fleet Mobile Platform • Standalone PWA v2.5
+        <div className="px-5 py-2.5 bg-slate-950 text-slate-500 text-[10px] text-center border-t border-slate-800 flex items-center justify-between">
+          <span>ResilientChain Fleet Mobile Platform • Standalone PWA v2.5</span>
+          <button
+            type="button"
+            onClick={handleOpenDedicatedTab}
+            className="text-emerald-400 hover:text-emerald-300 font-semibold"
+          >
+            Launch Standalone View ➔
+          </button>
         </div>
 
       </div>

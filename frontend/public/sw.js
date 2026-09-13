@@ -1,7 +1,6 @@
-const CACHE_NAME = 'resilient-chain-driver-v1';
+const CACHE_NAME = 'resilient-chain-driver-v2';
 const ASSETS_TO_CACHE = [
   '/',
-  '/driver',
   '/index.html',
   '/manifest.json',
   '/favicon.svg'
@@ -10,7 +9,14 @@ const ASSETS_TO_CACHE = [
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS_TO_CACHE);
+      // Add each asset gracefully without letting one missing asset abort the entire install
+      return Promise.all(
+        ASSETS_TO_CACHE.map((url) =>
+          cache.add(url).catch((err) => {
+            console.warn('[SW] Cache add skipped for:', url, err);
+          })
+        )
+      );
     }).then(() => self.skipWaiting())
   );
 });
@@ -30,7 +36,21 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  const url = new URL(event.request.url);
+  // Only handle HTTP/HTTPS GET requests
+  if (event.request.method !== 'GET') return;
+  
+  let url;
+  try {
+    url = new URL(event.request.url);
+  } catch (e) {
+    return;
+  }
+
+  // Bypass chrome extensions, websocket, and dev endpoints
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') return;
+  if (url.pathname.startsWith('/@') || url.pathname.includes('node_modules') || url.pathname.includes('chrome-extension')) {
+    return;
+  }
 
   // For API calls, try network first, then cache fallback
   if (url.pathname.startsWith('/api/')) {
@@ -53,12 +73,12 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // For page navigations (e.g. /driver), try network first, then fallback to cached shell
+  // For page navigations (e.g. /driver or /), try network first, then fallback to cached shell
   if (event.request.mode === 'navigate') {
     event.respondWith(
       fetch(event.request).catch(() => {
-        return caches.match('/driver').then((cached) => {
-          return cached || caches.match('/index.html') || caches.match('/');
+        return caches.match('/index.html').then((cached) => {
+          return cached || caches.match('/');
         });
       })
     );
@@ -87,6 +107,8 @@ self.addEventListener('fetch', (event) => {
           });
         }
         return networkResponse;
+      }).catch(() => {
+        return null;
       });
     })
   );

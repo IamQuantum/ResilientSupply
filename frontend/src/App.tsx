@@ -44,7 +44,7 @@ import {
   complianceChecks, 
   initialAuditTrail 
 } from './data/mockData';
-import { fetchHealth, runOptimization, submitApproval, fetchDispatch, fetchDisruptions } from './services/api';
+import { fetchHealth, runOptimization, submitApproval, fetchDispatch, fetchDisruptions, API_BASE } from './services/api';
 
 export function App() {
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
@@ -86,7 +86,7 @@ export function App() {
 
   const fetchNetworkData = async (orgId: string) => {
     try {
-      const res = await fetch(`http://localhost:8000/api/network/${orgId}`);
+      const res = await fetch(`${API_BASE}/network/${orgId}`);
       if (res.ok) {
         const data = await res.json();
         setCustomNodes(data.nodes || []);
@@ -99,7 +99,7 @@ export function App() {
 
   const fetchTeamMembers = async (orgId: string) => {
     try {
-      const res = await fetch(`http://localhost:8000/api/workforce/${orgId}`);
+      const res = await fetch(`${API_BASE}/workforce/${orgId}`);
       if (res.ok) {
         const data = await res.json();
         setAvailableTeam(data);
@@ -258,7 +258,7 @@ export function App() {
 
   const handleSwitchToDemo = async () => {
     try {
-      const res = await fetch('http://localhost:8000/api/auth/demo');
+      const res = await fetch(`${API_BASE}/auth/demo`);
       if (res.ok) {
         const data: AuthResponse = await res.json();
         handleLoginSuccess(data);
@@ -424,7 +424,7 @@ export function App() {
     setPendingApprovalsCount(0);
 
     try {
-      const res = await fetch(`http://localhost:8000/api/approvals/${selectedDisruption.id}`, {
+      const res = await fetch(`${API_BASE}/approvals/${selectedDisruption.id}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

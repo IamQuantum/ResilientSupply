@@ -12,6 +12,7 @@ import {
   FileText 
 } from 'lucide-react';
 import { AuthResponse } from '../types';
+import { API_BASE } from '../services/api';
 
 interface AuthViewProps {
   onLoginSuccess: (auth: AuthResponse) => void;
@@ -41,7 +42,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ onLoginSuccess }) => {
     setLoading(true);
     setErrorMsg('');
     try {
-      const res = await fetch('http://localhost:8000/api/auth/login', {
+      const res = await fetch(`${API_BASE}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: signInEmail, password: signInPassword })
@@ -64,7 +65,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ onLoginSuccess }) => {
     setLoading(true);
     setErrorMsg('');
     try {
-      const res = await fetch('http://localhost:8000/api/auth/register-company', {
+      const res = await fetch(`${API_BASE}/auth/register-company`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -95,7 +96,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ onLoginSuccess }) => {
     setLoading(true);
     setErrorMsg('');
     try {
-      const res = await fetch('http://localhost:8000/api/auth/demo');
+      const res = await fetch(`${API_BASE}/auth/demo`);
       if (!res.ok) throw new Error('Demo server unavailable');
       const data = await res.json();
       onLoginSuccess(data);

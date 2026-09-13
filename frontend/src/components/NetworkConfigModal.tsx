@@ -7,7 +7,8 @@ import {
   deleteCompanyNode, 
   addCompanyRoute, 
   updateCompanyRoute, 
-  deleteCompanyRoute 
+  deleteCompanyRoute,
+  API_BASE 
 } from '../services/api';
 
 interface NetworkConfigModalProps {
@@ -60,7 +61,7 @@ export const NetworkConfigModal: React.FC<NetworkConfigModalProps> = ({
     if (!orgId) return;
     setLoading(true);
     try {
-      const res = await fetch(`http://localhost:8000/api/network/${orgId}`);
+      const res = await fetch(`${API_BASE}/network/${orgId}`);
       if (res.ok) {
         const data = await res.json();
         setNodes(data.nodes || []);

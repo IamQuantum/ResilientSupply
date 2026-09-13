@@ -218,6 +218,9 @@ export const CustomRouteModal: React.FC<CustomRouteModalProps> = ({
     if (!isOpen || !mapContainerRef.current) return;
 
     if (!mapInstanceRef.current) {
+      if ((mapContainerRef.current as any)?._leaflet_id) {
+        (mapContainerRef.current as any)._leaflet_id = null;
+      }
       const map = L.map(mapContainerRef.current, {
         center: [20.5937, 78.9629], // Center of India
         zoom: 5,

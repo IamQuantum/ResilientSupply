@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Radio, Truck, CloudRain, Anchor, AlertTriangle, ShieldCheck, X, RefreshCw, Zap, Thermometer } from 'lucide-react';
+import { API_BASE } from '../services/api';
 
 interface TelemetryFeedModalProps {
   isOpen: boolean;
@@ -22,9 +23,9 @@ export const TelemetryFeedModal: React.FC<TelemetryFeedModalProps> = ({
     setLoading(true);
     try {
       const [fRes, sRes, aRes] = await Promise.all([
-        fetch('http://localhost:8000/api/telemetry/fleet'),
-        fetch('http://localhost:8000/api/telemetry/environmental'),
-        fetch('http://localhost:8000/api/telemetry/anomalies')
+        fetch(`${API_BASE}/telemetry/fleet`),
+        fetch(`${API_BASE}/telemetry/environmental`),
+        fetch(`${API_BASE}/telemetry/anomalies`)
       ]);
       const [fData, sData, aData] = await Promise.all([fRes.json(), sRes.json(), aRes.json()]);
       setFleet(fData);
@@ -45,7 +46,7 @@ export const TelemetryFeedModal: React.FC<TelemetryFeedModalProps> = ({
 
   const handleSimulate = async (eventType: string, label: string) => {
     try {
-      await fetch('http://localhost:8000/api/telemetry/simulate', {
+      await fetch(`${API_BASE}/telemetry/simulate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ eventType })

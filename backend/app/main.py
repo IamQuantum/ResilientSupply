@@ -759,7 +759,8 @@ def get_host_info():
         "localIp": local_ip,
         "frontendPort": 5173,
         "backendPort": 8000,
-        "driverAppUrl": f"http://{local_ip}:5173/driver"
+        "driverAppUrl": f"http://{local_ip}:5173/driver",
+        "unifiedUrl": f"http://{local_ip}:8000/driver"
     }
 
 @app.get("/api/driver/trip/{truck_id}")

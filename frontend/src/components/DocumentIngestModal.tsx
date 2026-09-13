@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Bot, FileText, Sparkles, X, CheckCircle2, ArrowRight, Shield, AlertTriangle } from 'lucide-react';
+import { API_BASE } from '../services/api';
 
 interface DocumentIngestModalProps {
   isOpen: boolean;
@@ -45,7 +46,7 @@ export const DocumentIngestModal: React.FC<DocumentIngestModalProps> = ({
     setResult(null);
 
     try {
-      const res = await fetch('http://localhost:8000/api/documents/parse', {
+      const res = await fetch(`${API_BASE}/documents/parse`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ documentText: inputText, cargoType })
