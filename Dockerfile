@@ -2,8 +2,9 @@
 # Stage 1: Build React + Vite frontend
 FROM node:20-alpine AS frontend-builder
 WORKDIR /app/frontend
+ENV NODE_OPTIONS="--max-old-space-size=512"
 COPY frontend/package*.json ./
-RUN npm ci
+RUN npm ci --no-audit --prefer-offline
 COPY frontend/ ./
 RUN npm run build
 
