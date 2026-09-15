@@ -294,19 +294,16 @@ export const DriverMobileApp: React.FC<DriverMobileAppProps> = ({
     setDeferredInstallPrompt(null);
   };
 
-  // Standard corridor waypoints: Pune -> Bhiwandi -> Surat -> Bharuch -> Vadodara -> Ahmedabad -> Jaipur -> Delhi
+  // Standard corridor waypoints: Kharar -> Mohali -> Ambala -> Kurukshetra -> Karnal -> Panipat -> Delhi NCR
   const standardCorridorCoords: [number, number][] = [
-    [18.7606, 73.8643], // Pune Chakan
-    [19.2967, 73.0620], // Bhiwandi
-    [20.5050, 72.9300], // Vapi
-    [21.1702, 72.8311], // Surat
-    [21.7051, 72.9959], // Bharuch Bridge
-    [22.3072, 73.1812], // Vadodara
-    [22.9868, 72.3814], // Ahmedabad Sanand
-    [24.5854, 73.7125], // Udaipur
-    [26.9124, 75.7873], // Jaipur
-    [28.4595, 77.0266], // Gurgaon
-    [28.6139, 77.2090]  // Delhi NCR
+    [30.7456, 76.6465], // Kharar Central DC
+    [30.6820, 76.7350], // Mohali
+    [30.5200, 76.7500], // Banur
+    [30.3782, 76.7767], // Ambala Cantt
+    [29.9695, 76.8783], // Kurukshetra
+    [29.6857, 76.9905], // Karnal
+    [29.3909, 76.9635], // Panipat
+    [28.8700, 77.1200]  // Kundli / Delhi NCR
   ];
 
   // Update clock every 10s
@@ -1225,16 +1222,16 @@ export const DriverMobileApp: React.FC<DriverMobileAppProps> = ({
               {/* Active Route Stepper */}
               <div className="bg-slate-900 border border-slate-800 rounded-2xl p-3 space-y-2">
                 <div className="text-xs font-bold text-slate-300 flex items-center justify-between">
-                  <span>Assigned Corridor: {isDetourActive ? 'SH-188 Detour Corridor' : routeCode}</span>
-                  <span className="text-[10px] text-slate-400">Total: {tripData?.totalDistanceKm || 1450} km</span>
+                  <span>Assigned Corridor: {isDetourActive ? 'Banur-Tepla Detour' : routeCode}</span>
+                  <span className="text-[10px] text-slate-400">Total: {tripData?.totalDistanceKm || 260} km</span>
                 </div>
                 <div className="space-y-1.5">
                   {(tripData?.waypoints || [
-                    { name: 'Pune Chakan DC', city: 'Pune', status: 'completed' },
-                    { name: 'Bhiwandi Central Hub', city: 'Mumbai', status: 'completed' },
-                    { name: 'Bharuch Narmada Causeway', city: 'Bharuch', status: 'current' },
-                    { name: 'Ahmedabad Sanand Hub', city: 'Ahmedabad', status: 'upcoming' },
-                    { name: 'Delhi NCR Regional DC', city: 'Gurgaon', status: 'upcoming' }
+                    { name: 'Kharar Central DC', city: 'Kharar', status: 'completed' },
+                    { name: 'Mohali / Chandigarh Hub', city: 'Mohali', status: 'completed' },
+                    { name: 'Ambala Cantt Junction', city: 'Ambala', status: 'current' },
+                    { name: 'Panipat Elevated Flyover', city: 'Panipat', status: 'upcoming' },
+                    { name: 'Delhi NCR Kundli Hub', city: 'Delhi NCR', status: 'upcoming' }
                   ]).map((wp: any, i: number) => (
                     <div key={i} className="flex items-center justify-between text-xs py-1 border-b border-slate-800/50 last:border-0">
                       <div className="flex items-center gap-2">

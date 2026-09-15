@@ -14,95 +14,109 @@ class SupplyChainNetwork:
 
     def _build_network(self):
         """
-        Builds the baseline multi-modal Indian freight logistics network.
-        Nodes represent Warehouses (W1 Mumbai, W2 Pune, W3 Ahmedabad), Transit Hubs, and NCR Delivery Center.
+        Builds the baseline multi-modal Northern Indian freight logistics network.
+        Nodes represent Warehouses (W1 Kharar Central, W2 Mohali/Chandigarh, W3 Ludhiana, W4 Baddi),
+        Transit Hubs (Ambala, Banur-Tepla, Panipat), and Delhi NCR Fulfilment Center.
         """
-        # Warehouses / Hubs in India
-        self.graph.add_node("W1_Mumbai_Bhiwandi", type="primary_hub", buffer_stock=100, safety_threshold=40)
-        self.graph.add_node("W2_Pune_Chakan", type="satellite_hub", buffer_stock=120, safety_threshold=30)
-        self.graph.add_node("W3_Ahmedabad_Sanand", type="satellite_hub", buffer_stock=90, safety_threshold=25)
+        # Warehouses / Hubs in Northern India
+        self.graph.add_node("W1_Kharar_Central_DC", type="primary_hub", buffer_stock=100, safety_threshold=30)
+        self.graph.add_node("W2_Mohali_Chandigarh_DC", type="satellite_hub", buffer_stock=120, safety_threshold=40)
+        self.graph.add_node("W3_Ludhiana_Focal_Point", type="satellite_hub", buffer_stock=110, safety_threshold=35)
+        self.graph.add_node("W4_Baddi_Pharma_Gateway", type="satellite_hub", buffer_stock=80, safety_threshold=20)
         
         # Transit Junctions on National Highways
-        self.graph.add_node("Transit_Surat_Bharuch", type="junction")
-        self.graph.add_node("Transit_Indore_Bypass", type="junction")
-        self.graph.add_node("Coastal_Konkan_Junction", type="junction")
+        self.graph.add_node("Transit_Ambala_Cantt", type="junction")
+        self.graph.add_node("Transit_Banur_Tepla", type="junction")
+        self.graph.add_node("Transit_Panipat_Bypass", type="junction")
         
-        # Destination Node: NCR Fulfilment Center
+        # Destination Node: NCR Fulfilment Center (Kundli/Sonipat)
         self.graph.add_node("Destination_Delhi_NCR", type="destination_center")
 
-        # Baseline Primary Arterial Route R1 (NH-48 Mumbai -> Surat/Bharuch -> NCR)
+        # Baseline Primary Arterial Route R1 (NH-44 Kharar -> Ambala -> Panipat -> Delhi NCR)
         self.graph.add_edge(
-            "W1_Mumbai_Bhiwandi", "Transit_Surat_Bharuch",
-            route_id="R1_NH48_Segment1",
-            cost_inr=15000,
-            hours=7,
+            "W1_Kharar_Central_DC", "Transit_Ambala_Cantt",
+            route_id="R1_NH44_Segment1",
+            cost_inr=8000,
+            hours=1.5,
+            failure_risk=0.04,
+            cold_chain=True,
+            capacity=30,
+            is_blocked=False
+        )
+        self.graph.add_edge(
+            "Transit_Ambala_Cantt", "Destination_Delhi_NCR",
+            route_id="R1_NH44_Segment2",
+            cost_inr=16000,
+            hours=4.0,
             failure_risk=0.05,
+            cold_chain=True,
+            capacity=30,
+            is_blocked=False
+        )
+
+        # Alternative Corridor R3 (via Mohali W2 -> Banur-Tepla Bypass -> Panipat -> Delhi NCR)
+        self.graph.add_edge(
+            "W2_Mohali_Chandigarh_DC", "Transit_Banur_Tepla",
+            route_id="R3_Banur_Segment1",
+            cost_inr=6000,
+            hours=1.0,
+            failure_risk=0.03,
             cold_chain=True,
             capacity=25,
             is_blocked=False
         )
         self.graph.add_edge(
-            "Transit_Surat_Bharuch", "Destination_Delhi_NCR",
-            route_id="R1_NH48_Segment2",
-            cost_inr=22000,
-            hours=17,
-            failure_risk=0.05,
+            "Transit_Banur_Tepla", "Transit_Panipat_Bypass",
+            route_id="R3_Banur_Segment2",
+            cost_inr=14000,
+            hours=2.5,
+            failure_risk=0.04,
+            cold_chain=True,
+            capacity=25,
+            is_blocked=False
+        )
+        self.graph.add_edge(
+            "Transit_Panipat_Bypass", "Destination_Delhi_NCR",
+            route_id="R3_Banur_Segment3",
+            cost_inr=18000,
+            hours=2.5,
+            failure_risk=0.04,
             cold_chain=True,
             capacity=25,
             is_blocked=False
         )
 
-        # Alternative Corridor R3 (via Pune Chakan W2 -> Indore -> Gwalior -> NCR)
+        # Alternative Corridor R2 (Kharar -> Ludhiana Industrial Expressway)
         self.graph.add_edge(
-            "W2_Pune_Chakan", "Transit_Indore_Bypass",
-            route_id="R3_Indore_Segment1",
-            cost_inr=32000,
-            hours=12,
-            failure_risk=0.06,
+            "W1_Kharar_Central_DC", "W3_Ludhiana_Focal_Point",
+            route_id="R2_NH5_Kharar_Ludhiana",
+            cost_inr=9000,
+            hours=2.0,
+            failure_risk=0.02,
             cold_chain=True,
-            capacity=20,
-            is_blocked=False
-        )
-        self.graph.add_edge(
-            "Transit_Indore_Bypass", "Destination_Delhi_NCR",
-            route_id="R3_Indore_Segment2",
-            cost_inr=40000,
-            hours=12,
-            failure_risk=0.08,
-            cold_chain=True,
-            capacity=20,
+            capacity=35,
             is_blocked=False
         )
 
-        # Alternative Corridor R5 (Coastal / Hybrid Rail-Road via Konkan)
+        # Alternative Corridor R5 (Rail / Multimodal from Ludhiana DFC to Delhi)
         self.graph.add_edge(
-            "W1_Mumbai_Bhiwandi", "Coastal_Konkan_Junction",
-            route_id="R5_Coastal_Segment1",
-            cost_inr=22000,
-            hours=36,
+            "W3_Ludhiana_Focal_Point", "Destination_Delhi_NCR",
+            route_id="R5_Ludhiana_Rail_Segment",
+            cost_inr=24000,
+            hours=48,
             failure_risk=0.25,
             cold_chain=False,
-            capacity=30,
-            is_blocked=False
-        )
-        self.graph.add_edge(
-            "Coastal_Konkan_Junction", "Destination_Delhi_NCR",
-            route_id="R5_Coastal_Segment2",
-            cost_inr=26000,
-            hours=48,
-            failure_risk=0.35,
-            cold_chain=False,
-            capacity=30,
+            capacity=40,
             is_blocked=False
         )
 
-        # Direct Air Freight Expedite Corridor (BOM → DEL Cargo)
+        # Direct Air Freight Expedite Corridor (IXC Chandigarh Cargo → DEL Cargo)
         self.graph.add_edge(
-            "W1_Mumbai_Bhiwandi", "Destination_Delhi_NCR",
-            route_id="Air_Cargo_BOM_DEL",
-            cost_inr=185000,
-            hours=14,
-            failure_risk=0.04,
+            "W1_Kharar_Central_DC", "Destination_Delhi_NCR",
+            route_id="Air_Cargo_IXC_DEL",
+            cost_inr=145000,
+            hours=8,
+            failure_risk=0.03,
             cold_chain=True,
             capacity=10,
             is_blocked=False
@@ -138,60 +152,60 @@ class RecoveryOptimizer:
                 "compliance": 0.10
             }
 
-        # Strategy A: Air Freight Expedite (Mumbai BOM -> Delhi DEL)
+        # Strategy A: Air Freight Expedite (IXC Chandigarh -> Delhi DEL)
         strat_a = {
             "id": "strat-a",
             "name": "Strategy A",
             "type": "Direct Air Expedite",
-            "route": "Direct Air Cargo (BOM → DEL)",
-            "cost": "₹1,85,000",
-            "costNumeric": 185000,
-            "delayHours": 14,
-            "delivery": "+1 Day",
+            "route": "Direct Air Cargo (IXC → DEL Terminal 3)",
+            "cost": "₹1,45,000",
+            "costNumeric": 145000,
+            "delayHours": 8,
+            "delivery": "+0.5 Days",
             "risk": "Low",
-            "riskNumeric": 0.04,
+            "riskNumeric": 0.03,
             "cold_chain": True,
             "inventory_action": "No buffer drawdown needed",
             "compliance_sla": "Maintains SLA strictly",
             "budget_limit_exceeded": True,
-            "rejection_reason": "Rejected by Financial Agent: Exceeds emergency freight budget (₹1,85,000 vs ₹1,00,000 ceiling)."
+            "rejection_reason": "Rejected by Financial Agent: Exceeds emergency freight budget (₹1,45,000 vs ₹80,000 ceiling)."
         }
 
-        # Strategy B: Regional Corridor R3 (via Pune Chakan W2 buffer)
+        # Strategy B: Regional Corridor R3 (via Mohali Hub W2 buffer & Banur bypass)
         strat_b = {
             "id": "strat-b",
             "name": "Strategy B",
             "badge": "RECOMMENDED",
             "type": "Regional Reroute + Safety Stock",
-            "route": "Via Corridor R3 (Pune Chakan Hub W2)",
-            "cost": "₹72,000",
-            "costNumeric": 72000,
-            "delayHours": 24,
+            "route": "Via Corridor R3 (Kharar-Banur-Tepla Bypass via Mohali Hub W2)",
+            "cost": "₹38,000",
+            "costNumeric": 38000,
+            "delayHours": 14,
             "delivery": "+1 Day",
             "risk": "Low",
-            "riskNumeric": 0.08,
+            "riskNumeric": 0.07,
             "cold_chain": True,
-            "inventory_action": "Drawdown Buffer Stock at W2 (leaves > 15% buffer)",
+            "inventory_action": "Drawdown Buffer Stock at W2 (leaves > 25% buffer)",
             "compliance_sla": "Maintains SLA within contractual grace window",
             "budget_limit_exceeded": False,
             "isRecommended": True
         }
 
-        # Strategy C: Hybrid Multi-Modal Coastal R5 (Slow / Cheap)
+        # Strategy C: Consolidated Rail Freight (Ludhiana DFC Rail/Road)
         strat_c = {
             "id": "strat-c",
             "name": "Strategy C",
-            "type": "Hybrid Multi-Modal (Rail/Road)",
-            "route": "Via Coastal Corridor R5",
-            "cost": "₹48,000",
-            "costNumeric": 48000,
-            "delayHours": 84,
-            "delivery": "+5 Days",
-            "risk": "High",
-            "riskNumeric": 0.60,
+            "type": "Consolidated Rail Freight (Ludhiana DFC)",
+            "route": "Via Ludhiana Dedicated Freight Corridor (Rail/Road)",
+            "cost": "₹24,000",
+            "costNumeric": 24000,
+            "delayHours": 48,
+            "delivery": "+2 Days",
+            "risk": "Medium",
+            "riskNumeric": 0.45,
             "cold_chain": False,
-            "inventory_action": "Depletes Mumbai Bhiwandi buffer completely",
-            "compliance_sla": "Violates Tier-1 customer SLA (+84h delay)",
+            "inventory_action": "Depletes Kharar Central DC buffer completely",
+            "compliance_sla": "Violates Tier-1 customer SLA (+48h delay)",
             "budget_limit_exceeded": False,
             "rejection_reason": "High risk of delivery penalty and lack of reefer temperature guarantee."
         }

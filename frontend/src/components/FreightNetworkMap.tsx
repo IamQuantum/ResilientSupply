@@ -102,60 +102,75 @@ interface FleetVehicle {
 }
 
 const DEFAULT_BENCHMARK_NODES: DisplayNode[] = [
-  { id: 'W1', name: 'W1: Mumbai Central DC', city: 'Bhiwandi, Maharashtra', address: 'Bhiwandi Logistics Hub, Mumbai 421302', role: 'Primary Distribution Center', stock: '15% (Buffer Depleting)', status: 'critical', lat: 19.2967, lng: 73.0631 },
-  { id: 'JNPT', name: 'JNPT Port Terminal', city: 'Navi Mumbai', address: 'Container Terminal 4, JNPT, Nhava Sheva 400707', role: 'Maritime Container Port', stock: 'Congestion: 18 Vessels Queued', status: 'critical', lat: 18.9499, lng: 72.9515 },
-  { id: 'W2', name: 'W2: Pune Satellite', city: 'Chakan, Maharashtra', address: 'MIDC Phase 2, Chakan, Pune 410501', role: 'Automotive & Industrial Hub', stock: '85% (Optimal Safety Stock)', status: 'operational', lat: 18.7606, lng: 73.8643 },
-  { id: 'T1', name: 'Surat-Bharuch Transit', city: 'Gujarat Corridor', address: 'NH-48 Golden Quadrilateral Toll Alpha', role: 'Transit Junction Alpha (NH-48)', stock: 'Highway Blocked (Waterlogging)', status: 'critical', lat: 21.1702, lng: 72.8311 },
-  { id: 'W3', name: 'W3: Ahmedabad Hub', city: 'Sanand, Gujarat', address: 'Sanand GIDC Logistics Park, Ahmedabad 382110', role: 'Western Manufacturing DC', stock: '92% Available Capacity', status: 'operational', lat: 23.0225, lng: 72.5714 },
-  { id: 'T2', name: 'Indore Bypass Hub', city: 'Madhya Pradesh', address: 'Pithampur Industrial Corridor, Indore 452010', role: 'Corridor R3 Re-route Junction', stock: 'Clear Freight Flow (65 km/h)', status: 'operational', lat: 22.7196, lng: 75.8577 },
-  { id: 'DEST', name: 'Delhi NCR Fulfilment', city: 'Greater Noida / Kundli', address: 'Kundli Industrial Area, Sonipat / NCR 131028', role: 'Destination Fulfilment Center', stock: '3 Tier-1 SLAs Awaiting Delivery', status: 'destination', lat: 28.6139, lng: 77.2090 },
+  { id: 'W1', name: 'W1: Kharar Central DC', city: 'Kharar, Punjab', address: 'NH-205A Logistics Belt, Kharar, Punjab 140301', role: 'Primary Distribution Center', stock: '18% (Buffer Depleting)', status: 'critical', lat: 30.7456, lng: 76.6465 },
+  { id: 'W2', name: 'W2: Chandigarh / Mohali Hub', city: 'Mohali, Punjab', address: 'Sector 82 JLPL Logistics Park, Mohali 160071', role: 'Automotive & IT Spares Hub', stock: '88% (Optimal Safety Stock)', status: 'operational', lat: 30.6820, lng: 76.7350 },
+  { id: 'W3', name: 'W3: Ludhiana Focal Point DC', city: 'Ludhiana, Punjab', address: 'Focal Point Phase VIII, Ludhiana 141010', role: 'Heavy Manufacturing & Freight Terminal', stock: '94% Available Capacity', status: 'operational', lat: 30.9010, lng: 75.8573 },
+  { id: 'T1', name: 'Ambala-Shambhu Transit', city: 'GT Road Corridor', address: 'NH-44 Shambhu Toll Barrier, Ambala Cantt 134003', role: 'Transit Junction Alpha (NH-44)', stock: 'Highway Blocked (Waterlogging)', status: 'critical', lat: 30.3782, lng: 76.7767 },
+  { id: 'W4', name: 'W4: Baddi Pharma Gateway', city: 'Baddi, HP', address: 'Baddi Industrial Estate, Solan District 173205', role: 'Active Pharma Cold-Chain DC', stock: '78% Available Capacity', status: 'operational', lat: 30.9578, lng: 76.7914 },
+  { id: 'T2', name: 'Panipat Transit Hub', city: 'Haryana Corridor', address: 'GT Road Elevated Highway, Panipat 132103', role: 'Corridor R3 Re-route Junction', stock: 'Clear Freight Flow (68 km/h)', status: 'operational', lat: 29.3909, lng: 76.9635 },
+  { id: 'DEST', name: 'Delhi NCR Fulfilment', city: 'Kundli / Sonipat / Delhi NCR', address: 'Kundli Industrial Area, Sonipat / NCR 131028', role: 'Destination Fulfilment Center', stock: '3 Tier-1 SLAs Awaiting Delivery', status: 'destination', lat: 28.8700, lng: 77.1200 },
 ];
 
 const DEFAULT_BENCHMARK_ROUTES: DisplayRoute[] = [
   {
     id: 'R1',
     code: 'R1',
-    name: 'Primary NH-48 Express (Blocked)',
-    origin: 'W1: Mumbai Central DC',
-    originAddress: 'Bhiwandi Logistics Hub, Mumbai 421302',
+    name: 'Primary NH-44 GT Road (Blocked)',
+    origin: 'W1: Kharar Central DC',
+    originAddress: 'NH-205A Logistics Belt, Kharar, Punjab 140301',
     destination: 'DEST: Delhi NCR Fulfilment',
     destinationAddress: 'Kundli Industrial Area, Sonipat / NCR 131028',
-    carrier: 'TCI Freight Express',
-    transitHours: 32,
-    distanceKm: 1420,
+    carrier: 'TCI Express Northern Fleet',
+    transitHours: 5.5,
+    distanceKm: 260,
     status: 'blocked',
-    startCoords: [19.2967, 73.0631],
-    endCoords: [28.6139, 77.2090]
+    startCoords: [30.7456, 76.6465],
+    endCoords: [28.8700, 77.1200]
   },
   {
     id: 'R2',
     code: 'R2',
-    name: 'Coastal Multi-Modal Bypass',
-    origin: 'JNPT Port Terminal',
-    originAddress: 'Container Terminal 4, JNPT, Nhava Sheva 400707',
-    destination: 'DEST: Delhi NCR Fulfilment',
-    destinationAddress: 'Kundli Industrial Area, Sonipat / NCR 131028',
-    carrier: 'CONCOR Intermodal Rail',
-    transitHours: 46,
-    distanceKm: 1540,
-    status: 'active_bypass',
-    startCoords: [18.9499, 72.9515],
-    endCoords: [28.6139, 77.2090]
+    name: 'NH-5 Kharar-Ludhiana Expressway',
+    origin: 'W1: Kharar Central DC',
+    originAddress: 'NH-205A Logistics Belt, Kharar, Punjab 140301',
+    destination: 'W3: Ludhiana Focal Point DC',
+    destinationAddress: 'Focal Point Phase VIII, Ludhiana 141010',
+    carrier: 'VRL Surface Logistics Punjab',
+    transitHours: 2,
+    distanceKm: 95,
+    status: 'optimal',
+    startCoords: [30.7456, 76.6465],
+    endCoords: [30.9010, 75.8573]
   },
   {
     id: 'R3',
     code: 'R3',
-    name: 'Central Arterial Re-route (Optimal)',
-    origin: 'W2: Pune Satellite',
-    originAddress: 'MIDC Phase 2, Chakan, Pune 410501',
+    name: 'Banur-Tepla Arterial Bypass (Optimal)',
+    origin: 'W2: Chandigarh / Mohali Hub',
+    originAddress: 'Sector 82 JLPL Logistics Park, Mohali 160071',
     destination: 'DEST: Delhi NCR Fulfilment',
     destinationAddress: 'Kundli Industrial Area, Sonipat / NCR 131028',
-    carrier: 'VRL Surface Logistics',
-    transitHours: 26,
-    distanceKm: 1390,
+    carrier: 'Allcargo Logistics Northern Fleet',
+    transitHours: 6,
+    distanceKm: 285,
     status: 'optimal',
-    startCoords: [18.7606, 73.8643],
-    endCoords: [28.6139, 77.2090]
+    startCoords: [30.6820, 76.7350],
+    endCoords: [28.8700, 77.1200]
+  },
+  {
+    id: 'R4',
+    code: 'R4',
+    name: 'Kharar-Siswan Baddi Pharma Link',
+    origin: 'W1: Kharar Central DC',
+    originAddress: 'NH-205A Logistics Belt, Kharar, Punjab 140301',
+    destination: 'W4: Baddi Pharma Gateway',
+    destinationAddress: 'Baddi Industrial Estate, Solan District 173205',
+    carrier: 'Gati KWE Reefer Logistics',
+    transitHours: 1.5,
+    distanceKm: 45,
+    status: 'optimal',
+    startCoords: [30.7456, 76.6465],
+    endCoords: [30.9578, 76.7914]
   }
 ];
 
@@ -164,7 +179,7 @@ export const FreightNetworkMap: React.FC<FreightNetworkMapProps> = ({
   customNodes = [],
   customRoutes = [],
   orgId = 'tata-motors',
-  orgName = 'Tata Motors CV',
+  orgName = 'Northern Corridor Logistics',
   onRouteAllotted,
   onSimulateDisruptionOnLane,
   onOpenDriverApp
@@ -189,10 +204,10 @@ export const FreightNetworkMap: React.FC<FreightNetworkMapProps> = ({
   const [selectedItem, setSelectedItem] = useState<{ type: 'node' | 'route' | 'vehicle'; data: any } | null>(null);
 
   // Allotment Form State
-  const [originInput, setOriginInput] = useState<string>('MIDC Phase 2, Chakan, Pune, Maharashtra 410501');
-  const [destinationInput, setDestinationInput] = useState<string>('DLF Cyber City, Phase 3, Gurugram, Haryana 122002');
-  const [routeCodeInput, setRouteCodeInput] = useState<string>('PUN-DEL-EXP');
-  const [carrierInput, setCarrierInput] = useState<string>('Blue Dart Express');
+  const [originInput, setOriginInput] = useState<string>('NH-205A Logistics Belt, Kharar, Punjab 140301');
+  const [destinationInput, setDestinationInput] = useState<string>('Kundli Industrial Area, Sonipat / Delhi NCR 131028');
+  const [routeCodeInput, setRouteCodeInput] = useState<string>('KHR-DEL-EXP');
+  const [carrierInput, setCarrierInput] = useState<string>('Blue Dart Northern Express');
   const [transportMode, setTransportMode] = useState<'ground' | 'air' | 'multimodal' | 'reefer'>('ground');
   const [isSubmittingRoute, setIsSubmittingRoute] = useState<boolean>(false);
   const [allotmentSuccessMsg, setAllotmentSuccessMsg] = useState<string>('');
@@ -200,10 +215,10 @@ export const FreightNetworkMap: React.FC<FreightNetworkMapProps> = ({
 
   // Resolved Coordinates for Preview
   const [resolvedOrigin, setResolvedOrigin] = useState<PinpointLocation>(() => 
-    resolveAddressPinpoint('MIDC Phase 2, Chakan, Pune, Maharashtra 410501')
+    resolveAddressPinpoint('NH-205A Logistics Belt, Kharar, Punjab 140301')
   );
   const [resolvedDest, setResolvedDest] = useState<PinpointLocation>(() => 
-    resolveAddressPinpoint('DLF Cyber City, Phase 3, Gurugram, Haryana 122002')
+    resolveAddressPinpoint('Kundli Industrial Area, Sonipat / Delhi NCR 131028')
   );
 
   // Poll Fleet Telematics every 4 seconds
@@ -322,8 +337,8 @@ export const FreightNetworkMap: React.FC<FreightNetworkMapProps> = ({
     if (!mapContainerRef.current || mapInstanceRef.current) return;
 
     const map = L.map(mapContainerRef.current, {
-      center: [21.8, 78.9],
-      zoom: 5,
+      center: [30.15, 76.55],
+      zoom: 8,
       zoomControl: false,
       attributionControl: false
     });

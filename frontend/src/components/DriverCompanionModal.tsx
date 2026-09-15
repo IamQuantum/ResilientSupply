@@ -374,7 +374,7 @@ export const DriverCompanionModal: React.FC<DriverCompanionModalProps> = ({
             <div className="text-xs">
               <div className="font-semibold text-slate-200">Active Corridor: {assignedRouteCode}</div>
               <p className="text-[11px] text-slate-400 mt-0.5">
-                Pune Chakan DC → Bhiwandi DC → Delhi NCR Hub (1,450 km)
+                Kharar Central DC → Mohali Hub → Delhi NCR Hub (260 km)
               </p>
             </div>
           </div>

@@ -13,18 +13,18 @@ class TelemetryEngine:
     def __init__(self):
         self.fleet_telematics = [
             {
-                "truckId": "MH-04-GP-8821",
-                "driverName": "Rameshwar Yadav",
-                "driverPhone": "+91 98201 44819",
+                "truckId": "PB-65-AK-8821",
+                "driverName": "Gurvinder Singh",
+                "driverPhone": "+91 98722 31908",
                 "carrier": "Allcargo Express Logistics",
                 "consignment": "Pfizer / Sun Pharma Biologics (5 Containers)",
-                "route": "R1 (NH-48)",
-                "location": "Surat-Bharuch Transit Bridge (KM 204)",
-                "lat": 21.7051,
-                "lng": 72.9959,
-                "heading": 25,
+                "route": "R1 (NH-44)",
+                "location": "Ambala Cantt - Shambhu Transit (KM 42)",
+                "lat": 30.3782,
+                "lng": 76.7767,
+                "heading": 175,
                 "speedKmh": 4,  # Stalled in waterlogging
-                "avgSpeedLast2h": 6.5,
+                "avgSpeedLast2h": 5.8,
                 "reeferTempC": 4.2,  # Compliant 2-8°C
                 "engineStatus": "IDLE_RUNNING",
                 "telematicsStatus": "ANOMALY_STALLED",
@@ -33,21 +33,21 @@ class TelemetryEngine:
                 "batteryPct": 84,
                 "isPhoneGps": False,
                 "emergencyAlert": None,
-                "anomalyReason": "Speed < 10 km/h for 140 minutes on arterial highway."
+                "anomalyReason": "Speed < 10 km/h for 110 minutes near Ambala Cantt on NH-44."
             },
             {
-                "truckId": "MH-12-QZ-4109",
-                "driverName": "Gurvinder Singh",
-                "driverPhone": "+91 98722 31908",
+                "truckId": "PB-10-CZ-4109",
+                "driverName": "Harpreet Singh",
+                "driverPhone": "+91 98140 55210",
                 "carrier": "TCI Express Reefer Fleet",
-                "consignment": "Tata Motors Powertrain Sub-Assemblies",
-                "route": "R3 (Pune-Indore Corridor)",
-                "location": "Indore Outer Bypass (NH-52)",
-                "lat": 22.7196,
-                "lng": 75.8577,
-                "heading": 15,
+                "consignment": "Automotive OEM Powertrain Assemblies",
+                "route": "R2 (Kharar-Ludhiana NH-5)",
+                "location": "Samrala Bypass (NH-5)",
+                "lat": 30.8350,
+                "lng": 76.1900,
+                "heading": 275,
                 "speedKmh": 68,
-                "avgSpeedLast2h": 64.0,
+                "avgSpeedLast2h": 65.0,
                 "reeferTempC": None,
                 "engineStatus": "CRUISING",
                 "telematicsStatus": "OPTIMAL",
@@ -59,61 +59,61 @@ class TelemetryEngine:
                 "anomalyReason": None
             },
             {
-                "truckId": "GJ-01-TX-9932",
-                "driverName": "Bhikhabhai Patel",
-                "driverPhone": "+91 94260 12890",
+                "truckId": "HR-03-TY-9932",
+                "driverName": "Rajinder Sharma",
+                "driverPhone": "+91 94160 88201",
                 "carrier": "Mahindra Logistics Regional Freight",
-                "consignment": "FMCG / Dry Packaged Food Retail",
-                "route": "R1 (NH-48 Northbound)",
-                "location": "Navsari Junction, South Gujarat",
-                "lat": 20.9500,
-                "lng": 72.9300,
-                "heading": 10,
-                "speedKmh": 18,
-                "avgSpeedLast2h": 22.0,
+                "consignment": "Industrial Steel Components & Hardware",
+                "route": "R3 (Banur-Delhi Bypass)",
+                "location": "Panipat Toll Plaza (NH-44)",
+                "lat": 29.3909,
+                "lng": 76.9635,
+                "heading": 180,
+                "speedKmh": 62,
+                "avgSpeedLast2h": 61.0,
                 "reeferTempC": None,
-                "engineStatus": "SLOW_TRAFFIC",
-                "telematicsStatus": "CONGESTED",
+                "engineStatus": "CRUISING",
+                "telematicsStatus": "OPTIMAL",
                 "dutyStatus": "ON_DUTY_DRIVING",
                 "breakTimerMinutes": 0,
-                "batteryPct": 71,
+                "batteryPct": 76,
                 "isPhoneGps": False,
                 "emergencyAlert": None,
-                "anomalyReason": "Bottleneck tailback from Bharuch bridge."
+                "anomalyReason": None
             },
             {
-                "truckId": "MH-46-AR-1155",
-                "driverName": "Pradeep Salunke",
-                "driverPhone": "+91 99670 55102",
-                "carrier": "Gati KWE Inter-Modal Fleet",
-                "consignment": "Automotive ECU Chips & Sensors",
-                "route": "JNPT Maritime Outbound Corridor",
-                "location": "Navi Mumbai ICD Feeder Road",
-                "lat": 18.9499,
-                "lng": 72.9510,
-                "heading": 90,
-                "speedKmh": 8,
-                "avgSpeedLast2h": 9.2,
-                "reeferTempC": 5.1,
-                "engineStatus": "PORT_QUEUE",
-                "telematicsStatus": "PORT_DELAY",
-                "dutyStatus": "AT_DC_UNLOADING",
+                "truckId": "HP-12-BF-1155",
+                "driverName": "Baljit Singh",
+                "driverPhone": "+91 98820 44102",
+                "carrier": "Gati KWE Reefer Logistics",
+                "consignment": "Baddi Active Pharma Ingredients (API)",
+                "route": "R4 (Kharar-Baddi Pharma Link)",
+                "location": "Siswan Barrier (PB-HP Border)",
+                "lat": 30.8650,
+                "lng": 76.7200,
+                "heading": 45,
+                "speedKmh": 38,
+                "avgSpeedLast2h": 34.0,
+                "reeferTempC": 4.1,
+                "engineStatus": "CRUISING",
+                "telematicsStatus": "OPTIMAL",
+                "dutyStatus": "ON_DUTY_DRIVING",
                 "breakTimerMinutes": 0,
-                "batteryPct": 65,
+                "batteryPct": 88,
                 "isPhoneGps": False,
                 "emergencyAlert": None,
-                "anomalyReason": "JNPT terminal gate-in queue exceeding 6 hours."
+                "anomalyReason": None
             },
             {
                 "truckId": "DRV-MOBILE-GPS",
                 "driverName": "Field Driver (Your Phone GPS)",
-                "driverPhone": "+91 98900 12345",
+                "driverPhone": "+91 98720 00000",
                 "carrier": "ResilientChain Direct Courier",
-                "consignment": "High-Priority Tier-1 Assemblies",
+                "consignment": "High-Priority Tier-1 Consignment",
                 "route": "Assigned Live GPS Corridor",
-                "location": "Awaiting Mobile GPS Stream",
-                "lat": 18.5204,
-                "lng": 73.8567,
+                "location": "Kharar Central DC Gateway",
+                "lat": 30.7456,
+                "lng": 76.6465,
                 "heading": 0,
                 "speedKmh": 0,
                 "avgSpeedLast2h": 0,
@@ -131,34 +131,34 @@ class TelemetryEngine:
 
         self.environmental_sensors = [
             {
-                "sensorId": "IMD-RADAR-SURAT-01",
+                "sensorId": "IMD-RADAR-AMBALA-01",
                 "source": "India Meteorological Department (IMD) Doppler Radar",
-                "location": "Surat / South Gujarat Coastline",
+                "location": "Ambala / Shambhu GT Road Corridor",
                 "metricName": "Monsoon Precipitation Rate",
-                "currentValue": "54 mm/h",
+                "currentValue": "58 mm/h",
                 "thresholdValue": "40 mm/h",
                 "status": "CRITICAL_ALERT",
-                "message": "Heavy downpour causing flash waterlogging across low-lying highway sections of NH-48."
+                "message": "Heavy downpour causing localized flooding at Ambala railway underpass on NH-44."
             },
             {
-                "sensorId": "AIS-PORT-JNPT-09",
-                "source": "JNPT Vessel Traffic Management System (VTMS)",
-                "location": "Navi Mumbai Anchorage",
-                "metricName": "Container Vessels in Queue",
-                "currentValue": "19 Vessels",
-                "thresholdValue": "12 Vessels",
-                "status": "HIGH_CONGESTION",
-                "message": "Berth wait time stands at 94 hours. Severe gate-in dwell cascading to outbound logistics."
-            },
-            {
-                "sensorId": "NHAI-TOLL-BHARUCH-RFID",
+                "sensorId": "NHAI-TOLL-SHAMBHU-RFID",
                 "source": "National Highways Authority of India (NHAI) FASTag Telematics",
-                "location": "Narmada Bridge Toll Plaza (NH-48)",
+                "location": "Shambhu Toll Plaza (NH-44)",
                 "metricName": "Freight Throughput Velocity",
-                "currentValue": "14 trucks/hour (Down 82%)",
-                "thresholdValue": "75 trucks/hour",
+                "currentValue": "11 trucks/hour (Down 86%)",
+                "thresholdValue": "80 trucks/hour",
                 "status": "SEVERE_BOTTLENECK",
-                "message": "Structural girder inspection and water pump-out in progress."
+                "message": "Water pump-out and traffic diversion in progress near Shambhu border."
+            },
+            {
+                "sensorId": "IMD-FOG-SISWAN-04",
+                "source": "IMD Hill Transit Highway Station",
+                "location": "Siswan Pass (Kharar-Baddi Corridor)",
+                "metricName": "Transit Fog Visibility",
+                "currentValue": "240 meters",
+                "thresholdValue": "500 meters",
+                "status": "WEATHER_WARNING",
+                "message": "Seasonal dense fog along hill curves. Safe transit speed capped at 35 km/h."
             }
         ]
 
@@ -414,55 +414,52 @@ class TelemetryEngine:
 
         # Determine waypoints and manoeuvre based on reroute state
         waypoints = [
-            {"name": "Pune Chakan DC", "city": "Pune", "lat": 18.7606, "lng": 73.8643, "status": "completed"},
-            {"name": "Bhiwandi Central DC", "city": "Mumbai", "lat": 19.2967, "lng": 73.0620, "status": "completed"},
-            {"name": "Surat Bypass Point", "city": "Surat", "lat": 21.1702, "lng": 72.8311, "status": "passed"},
-            {"name": "Bharuch Narmada Bridge", "city": "Bharuch", "lat": 21.7051, "lng": 72.9959, "status": "current"},
-            {"name": "Vadodara Express Gate", "city": "Vadodara", "lat": 22.3072, "lng": 73.1812, "status": "upcoming"},
-            {"name": "Ahmedabad Sanand Hub", "city": "Ahmedabad", "lat": 22.9868, "lng": 72.3814, "status": "upcoming"},
-            {"name": "Jaipur Ring Bypass", "city": "Jaipur", "lat": 26.9124, "lng": 75.7873, "status": "upcoming"},
-            {"name": "Delhi NCR Hub", "city": "Gurugram", "lat": 28.4908, "lng": 77.0906, "status": "upcoming"}
+            {"name": "Kharar Central DC", "city": "Kharar", "lat": 30.7456, "lng": 76.6465, "status": "completed"},
+            {"name": "Mohali / Chandigarh Hub", "city": "Mohali", "lat": 30.6820, "lng": 76.7350, "status": "completed"},
+            {"name": "Shambhu Toll Barrier", "city": "Shambhu", "lat": 30.4500, "lng": 76.7200, "status": "passed"},
+            {"name": "Ambala Cantt Junction", "city": "Ambala", "lat": 30.3782, "lng": 76.7767, "status": "current"},
+            {"name": "Kurukshetra Bypass", "city": "Kurukshetra", "lat": 29.9695, "lng": 76.8783, "status": "upcoming"},
+            {"name": "Karnal Highway Belt", "city": "Karnal", "lat": 29.6857, "lng": 76.9905, "status": "upcoming"},
+            {"name": "Panipat Elevated Flyover", "city": "Panipat", "lat": 29.3909, "lng": 76.9635, "status": "upcoming"},
+            {"name": "Delhi NCR Kundli Hub", "city": "Sonipat / Kundli", "lat": 28.8700, "lng": 77.1200, "status": "upcoming"}
         ]
-        next_manoeuvre = "In 4.2 km, continue on NH48 toward Bharuch bypass"
-        next_manoeuvre_hi = "Aage 4.2 kilometer tak NH-48 par Bharuch bypass ki taraf chalte rahein"
+        next_manoeuvre = "In 3.8 km, continue on NH-44 toward Ambala bypass"
+        next_manoeuvre_hi = "Aage 3.8 kilometer tak NH-44 par Ambala bypass ki taraf chalte rahein"
 
         if active_reroute and active_reroute.get("status") == "ACCEPTED":
             if "newWaypoints" in active_reroute:
                 waypoints = active_reroute["newWaypoints"]
             if "newManoeuvre" in active_reroute:
                 next_manoeuvre = active_reroute["newManoeuvre"]
-                next_manoeuvre_hi = "Aage 1.8 kilometer chalkar SH-188 bypass exit lein"
+                next_manoeuvre_hi = "Aage 1.5 kilometer chalkar Banur-Tepla expressway bypass exit lein"
 
         # Standard corridor road-snapped polyline (non-blocking instant return)
         if not hasattr(self, "_standard_road_cache") or self._standard_road_cache is None:
             self._standard_road_cache = {
-                "distanceKm": 1420.5,
-                "durationHours": 24.5,
+                "distanceKm": 260.0,
+                "durationHours": 5.2,
                 "polyline": [
-                    [18.7606, 73.8643], # Pune Chakan
-                    [19.2967, 73.0620], # Bhiwandi
-                    [20.5050, 72.9300], # Vapi
-                    [21.1702, 72.8311], # Surat
-                    [21.7051, 72.9959], # Bharuch Bridge
-                    [22.3072, 73.1812], # Vadodara
-                    [22.9868, 72.3814], # Ahmedabad Sanand
-                    [24.5854, 73.7125], # Udaipur
-                    [26.9124, 75.7873], # Jaipur
-                    [28.4595, 77.0266], # Gurgaon
-                    [28.6139, 77.2090]  # Delhi NCR
+                    [30.7456, 76.6465], # Kharar
+                    [30.6820, 76.7350], # Mohali
+                    [30.5200, 76.7500], # Banur
+                    [30.3782, 76.7767], # Ambala Cantt
+                    [29.9695, 76.8783], # Kurukshetra
+                    [29.6857, 76.9905], # Karnal
+                    [29.3909, 76.9635], # Panipat
+                    [28.8700, 77.1200]  # Kundli / Delhi NCR
                 ],
                 "steps": [
-                    {"manoeuvre": "Head north from Pune Chakan toward NH-48", "distanceKm": 45.0, "durationMin": 52.0},
-                    {"manoeuvre": "Continue on NH-48 through Bhiwandi and Vapi", "distanceKm": 380.0, "durationMin": 360.0},
-                    {"manoeuvre": "Follow NH-48 toward Bharuch and Vadodara", "distanceKm": 210.0, "durationMin": 220.0},
-                    {"manoeuvre": "Take National Highway 48 North to Jaipur & Delhi NCR", "distanceKm": 785.5, "durationMin": 720.0}
+                    {"manoeuvre": "Head south from Kharar Central DC toward NH-205A & Mohali", "distanceKm": 14.0, "durationMin": 22.0},
+                    {"manoeuvre": "Follow NH-152 toward Ambala Cantt GT Road Junction", "distanceKm": 38.0, "durationMin": 45.0},
+                    {"manoeuvre": "Continue along National Highway 44 through Kurukshetra and Karnal", "distanceKm": 110.0, "durationMin": 105.0},
+                    {"manoeuvre": "Cross Panipat flyover toward Kundli Logistics Belt & Delhi NCR", "distanceKm": 98.0, "durationMin": 95.0}
                 ]
             }
             # Asynchronously refresh high-res road-snapped geometry in background without blocking API
             import threading
             def _async_refresh_road():
                 try:
-                    res = calculate_road_route(18.7606, 73.8643, 28.4908, 77.0906)
+                    res = calculate_road_route(30.7456, 76.6465, 28.8700, 77.1200)
                     if res and res.get("polyline"):
                         self._standard_road_cache = res
                 except Exception:
@@ -475,15 +472,15 @@ class TelemetryEngine:
         return {
             "truckId": target["truckId"],
             "driverName": target["driverName"],
-            "driverPhone": target.get("driverPhone", "+91 98201 44819"),
-            "carrier": target.get("carrier", "Allcargo Logistics Express"),
-            "routeCode": target.get("route", "PUN-DEL-EXP"),
-            "origin": "Pune Chakan DC",
-            "destination": "Delhi NCR Hub",
-            "originAddress": "MIDC Phase 2, Chakan, Pune, Maharashtra 410501",
-            "destinationAddress": "Sector 34, Gurugram Logistics Park, Haryana 122004",
-            "totalDistanceKm": 1450 + (48 if active_reroute and active_reroute.get("status") == "ACCEPTED" else 0),
-            "remainingKm": 840,
+            "driverPhone": target.get("driverPhone", "+91 98722 31908"),
+            "carrier": target.get("carrier", "Allcargo Express Logistics"),
+            "routeCode": target.get("route", "KHR-DEL-EXP"),
+            "origin": "Kharar Central DC",
+            "destination": "Delhi NCR Fulfilment Hub",
+            "originAddress": "NH-205A Logistics Belt, Kharar, Punjab 140301",
+            "destinationAddress": "Kundli Industrial Area, Sonipat / Delhi NCR 131028",
+            "totalDistanceKm": 260 + (25 if active_reroute and active_reroute.get("status") == "ACCEPTED" else 0),
+            "remainingKm": 185,
             "currentLat": target["lat"],
             "currentLng": target["lng"],
             "speedKmh": target["speedKmh"],
@@ -491,7 +488,7 @@ class TelemetryEngine:
             "batteryPct": target.get("batteryPct", 88),
             "nextManoeuvre": next_manoeuvre,
             "nextManoeuvreHi": next_manoeuvre_hi,
-            "eta": "Tomorrow, 09:15 AM" if (active_reroute and active_reroute.get("status") == "ACCEPTED") else "Tomorrow, 08:30 AM",
+            "eta": "Today, 06:45 PM" if (active_reroute and active_reroute.get("status") == "ACCEPTED") else "Today, 05:30 PM",
             "activeReroute": active_reroute,
             "isCustomRoute": False,
             "roadPolyline": road_poly,
@@ -499,22 +496,22 @@ class TelemetryEngine:
             "waypoints": waypoints,
             "ewayBill": {
                 "billNumber": "5310-9482-1092",
-                "generatedDate": "2026-09-12 06:30 IST",
-                "validUntil": "2026-09-15 23:59 IST",
+                "generatedDate": "2026-09-14 06:30 IST",
+                "validUntil": "2026-09-16 23:59 IST",
                 "supplyType": "Outward - Regular Supply",
                 "docType": "Tax Invoice (INV-2026-8819)",
                 "consignor": {
-                    "name": "Tata Motors Ltd - Chakan Plant",
-                    "gstin": "27AAAAC1234F1Z5",
-                    "address": "Plot A-1, MIDC Chakan Phase 2, Pune, MH 410501"
+                    "name": "Northern Logistics Hub - Kharar DC",
+                    "gstin": "03AAACT0000A1Z5",
+                    "address": "NH-205A Logistics Belt, Kharar, Punjab 140301"
                 },
                 "consignee": {
-                    "name": "Delhi NCR Regional Distribution Hub",
-                    "gstin": "07AAACG5678K1Z2",
-                    "address": "Sector 34, Gurugram Logistics Park, HR 122004"
+                    "name": "Delhi NCR Regional Fulfilment Center",
+                    "gstin": "06AAACS1111B1Z9",
+                    "address": "Kundli Industrial Area, Phase 4, Sonipat / NCR 131028"
                 },
                 "cargo": {
-                    "description": "Commercial Vehicle Powertrains & Transmissions (420 Units)",
+                    "description": "Industrial Commercial Assemblies & Automotive Transmissions",
                     "hsnCode": "8708",
                     "totalWeight": "14.2 Metric Tonnes",
                     "totalAmountInr": 4850000,
@@ -523,20 +520,20 @@ class TelemetryEngine:
                     "sgstInr": 369915
                 },
                 "transport": {
-                    "transporterName": "Allcargo Logistics Express Ltd",
-                    "transporterId": "27AABCA9001D1Z8",
+                    "transporterName": "Allcargo Express Logistics Ltd",
+                    "transporterId": "03AABCA9001D1Z8",
                     "vehicleNumber": target["truckId"],
                     "lrNumber": "AC-2026-9941",
-                    "docDate": "2026-09-12"
+                    "docDate": "2026-09-14"
                 },
-                "qrPayload": "GSTIN:27AAAAC1234F1Z5|EWB:531094821092|VEH:MH04GP8821|VAL:4850000|DATE:2026-09-12|FROM:410501|TO:122004"
+                "qrPayload": "GSTIN:03AAACT0000A1Z5|EWB:531094821092|VEH:PB65AK8821|VAL:4850000|DATE:2026-09-14|FROM:140301|TO:131028"
             },
             "hazardAlert": {
                 "active": True,
-                "title": "Severe Weather & Waterlogging Warning",
+                "title": "Severe Waterlogging & Transit Warning",
                 "severity": "WARNING",
-                "location": "NH-48 Bharuch - Narmada River Causeway (KM 204)",
-                "message": "Monsoon precipitation active. Water level over causeway bridge +0.8m. Heavy vehicles proceed with caution at <= 40 km/h. AI reroute option standby."
+                "location": "NH-44 Ambala Cantt Railway Underpass (KM 42)",
+                "message": "Monsoon water accumulation active near Ambala underpass. Water level +0.6m. Commercial vehicles rerouting via Kharar-Banur-Tepla bypass."
             },
             "messages": msgs
         }
@@ -545,7 +542,7 @@ class TelemetryEngine:
         self,
         incident_id: str = "disr-01",
         strategy_id: str = "strat-b",
-        carrier: str = "Allcargo Logistics Express",
+        carrier: str = "Allcargo Express Logistics",
         notes: str = None
     ) -> Dict[str, Any]:
         reroute_id = f"reroute-{int(datetime.utcnow().timestamp())}"
@@ -556,45 +553,39 @@ class TelemetryEngine:
             "incidentId": incident_id,
             "strategyId": strategy_id,
             "status": "PROPOSED",
-            "reason": "NH-48 Narmada Bridge Submersion (KM 204)",
-            "strategyName": "Dynamic Highway Bypass via SH-188 & Ankleshwar Ring",
-            "detourSummary": "Divert at Surat Exit 18 → SH-188 State Highway → Vadodara South Gateway",
-            "originalCorridor": "NH-48 Direct Arterial",
-            "newCorridor": "SH-188 Western Bypass Detour",
-            "addedKm": 48,
-            "etaDelayMinutes": 45,
+            "reason": "NH-44 Ambala Cantt Waterlogged Underpass (KM 42)",
+            "strategyName": "Dynamic Highway Bypass via Kharar-Banur-Tepla & NH-152D",
+            "detourSummary": "Divert at Mohali Exit → Banur-Tepla Expressway → Panipat Elevated Corridor",
+            "originalCorridor": "NH-44 Direct Arterial",
+            "newCorridor": "Banur-Tepla Arterial Bypass",
+            "addedKm": 25,
+            "etaDelayMinutes": 35,
             "approvedBy": "Aditya (VP Global Supply Chain)",
             "approvedAt": now_time,
-            "newManoeuvre": "In 1.8 km, take Exit 18 for SH-188 State Highway Bypass toward Vadodara",
+            "newManoeuvre": "In 1.5 km, take Exit for Banur-Tepla Expressway bypass toward Panipat & Delhi",
             "newWaypoints": [
-                {"name": "Pune Chakan DC", "city": "Pune", "lat": 18.7606, "lng": 73.8643, "status": "completed"},
-                {"name": "Bhiwandi Central Hub", "city": "Mumbai", "lat": 19.2967, "lng": 73.0620, "status": "completed"},
-                {"name": "Surat Exit 18 (Detour Point)", "city": "Surat", "lat": 21.1702, "lng": 72.8311, "status": "passed"},
-                {"name": "SH-188 Ankleshwar East Bypass", "city": "Ankleshwar", "lat": 21.5800, "lng": 73.0500, "status": "current"},
-                {"name": "Narmada Elevated Super-Bridge", "city": "Narmada River", "lat": 21.8200, "lng": 73.1800, "status": "upcoming"},
-                {"name": "Vadodara South Gateway", "city": "Vadodara", "lat": 22.2500, "lng": 73.2100, "status": "upcoming"},
-                {"name": "Ahmedabad Sanand Hub", "city": "Ahmedabad", "lat": 22.9868, "lng": 72.3814, "status": "upcoming"},
-                {"name": "Jaipur Ring Bypass", "city": "Jaipur", "lat": 26.9124, "lng": 75.7873, "status": "upcoming"},
-                {"name": "Delhi NCR Hub", "city": "Gurugram", "lat": 28.4908, "lng": 77.0906, "status": "upcoming"}
+                {"name": "Kharar Central DC", "city": "Kharar", "lat": 30.7456, "lng": 76.6465, "status": "completed"},
+                {"name": "Mohali JLPL Hub", "city": "Mohali", "lat": 30.6820, "lng": 76.7350, "status": "completed"},
+                {"name": "Banur Toll Bypass", "city": "Banur", "lat": 30.5200, "lng": 76.7500, "status": "passed"},
+                {"name": "Tepla Junction (NH-152D)", "city": "Tepla", "lat": 30.3100, "lng": 76.9200, "status": "current"},
+                {"name": "Shahabad Bypass", "city": "Shahabad", "lat": 30.1600, "lng": 76.8700, "status": "upcoming"},
+                {"name": "Karnal Lake Point", "city": "Karnal", "lat": 29.6857, "lng": 76.9905, "status": "upcoming"},
+                {"name": "Panipat Elevated Flyover", "city": "Panipat", "lat": 29.3909, "lng": 76.9635, "status": "upcoming"},
+                {"name": "Delhi NCR Kundli Hub", "city": "Sonipat / Kundli", "lat": 28.8700, "lng": 77.1200, "status": "upcoming"}
             ],
             "detourPolyline": [
-                [18.7606, 73.8643],
-                [19.2967, 73.0620],
-                [20.5050, 72.9300],
-                [21.1702, 72.8311], # Detour exit
-                [21.5800, 73.0500], # SH-188
-                [21.8200, 73.1800], # Elevated bridge
-                [22.2500, 73.2100], # Vadodara south
-                [22.3072, 73.1812], # Vadodara
-                [22.9868, 72.3814],
-                [24.5854, 73.7125],
-                [26.9124, 75.7873],
-                [28.4595, 77.0266],
-                [28.6139, 77.2090]
+                [30.7456, 76.6465],
+                [30.6820, 76.7350],
+                [30.5200, 76.7500],
+                [30.3100, 76.9200], # Tepla bypass
+                [30.1600, 76.8700],
+                [29.6857, 76.9905],
+                [29.3909, 76.9635],
+                [28.8700, 77.1200]
             ]
         }
 
-        target_trucks = ["MH-04-GP-8821", "MH-14-BT-9901"]
+        target_trucks = ["PB-65-AK-8821", "MH-04-GP-8821", "MH-14-BT-9901"]
         for t in self.fleet_telematics:
             if t["truckId"] in target_trucks:
                 t["activeReroute"] = reroute_data
@@ -602,7 +593,7 @@ class TelemetryEngine:
                     truck_id=t["truckId"],
                     sender="HQ Operations Dispatch",
                     role="dispatch",
-                    text=f"🚨 REROUTE DISPATCH APPROVED: Narmada River Causeway flooded on NH-48. Approved detour via SH-188 bypass (+48 km). Tap to accept updated navigation waypoints."
+                    text=f"🚨 REROUTE DISPATCH APPROVED: Waterlogging on NH-44 near Ambala Cantt. Approved detour via Banur-Tepla Expressway (+25 km). Tap to accept updated navigation waypoints."
                 )
 
         if not hasattr(self, "_active_reroutes"):
@@ -613,7 +604,7 @@ class TelemetryEngine:
     def accept_reroute(self, truck_id: str, reroute_id: str) -> Dict[str, Any]:
         target = None
         for t in self.fleet_telematics:
-            if t["truckId"] == truck_id or truck_id in [t.get("truckId", ""), "MH-14-BT-9901"]:
+            if t["truckId"] == truck_id or truck_id in [t.get("truckId", ""), "PB-65-AK-8821", "MH-14-BT-9901"]:
                 target = t
                 break
         if not target:
@@ -626,30 +617,30 @@ class TelemetryEngine:
         if reroute:
             reroute["status"] = "ACCEPTED"
             target["activeReroute"] = reroute
-            target["route"] = reroute.get("newCorridor", "SH-188 Detour")
+            target["route"] = reroute.get("newCorridor", "Banur-Tepla Detour")
             target["telematicsStatus"] = "OPTIMAL"
             target["engineStatus"] = "DRIVING"
             target["speedKmh"] = 58
             target["anomalyReason"] = None
-            target["lat"] = 21.5800  # Shift position to detour route
-            target["lng"] = 73.0500
+            target["lat"] = 30.3100  # Shift position to Tepla bypass
+            target["lng"] = 76.9200
 
             self.add_driver_message(
                 truck_id=target["truckId"],
                 sender=target["driverName"],
                 role="driver",
-                text="✅ Detour via SH-188 accepted. Navigation updated. Vehicle proceeding toward Vadodara South Gateway."
+                text="✅ Detour via Banur-Tepla accepted. Navigation updated. Vehicle proceeding toward Panipat & Delhi NCR."
             )
             return {"status": "success", "reroute": reroute, "truck": target}
         return {"status": "error", "message": "No active reroute found"}
 
     def reset_reroute(self, truck_id: str) -> Dict[str, Any]:
         for t in self.fleet_telematics:
-            if t["truckId"] == truck_id or truck_id in [t.get("truckId", ""), "MH-14-BT-9901"]:
+            if t["truckId"] == truck_id or truck_id in [t.get("truckId", ""), "PB-65-AK-8821", "MH-14-BT-9901"]:
                 t["activeReroute"] = None
-                t["route"] = "PUN-DEL-EXP"
-                t["lat"] = 21.7051
-                t["lng"] = 72.9959
+                t["route"] = "KHR-DEL-EXP"
+                t["lat"] = 30.3782
+                t["lng"] = 76.7767
                 break
         if hasattr(self, "_active_reroutes"):
             self._active_reroutes.pop("default", None)
@@ -747,11 +738,11 @@ class TelemetryEngine:
         if hasattr(self, "_custom_dispatched_routes"):
             self._custom_dispatched_routes.pop(truck_id, None)
         for t in self.fleet_telematics:
-            if t["truckId"] == truck_id or truck_id == "MH-04-GP-8821":
-                t["route"] = "R1 (NH-48)"
-                t["lat"] = 21.7051
-                t["lng"] = 72.9959
-                t["location"] = "Surat-Bharuch Transit Bridge (KM 204)"
+            if t["truckId"] == truck_id or truck_id in ["PB-65-AK-8821", "MH-04-GP-8821"]:
+                t["route"] = "R1 (NH-44)"
+                t["lat"] = 30.3782
+                t["lng"] = 76.7767
+                t["location"] = "Ambala Cantt - Shambhu Transit (KM 42)"
                 break
         return {"status": "success", "message": f"Cleared custom route for {truck_id}"}
 

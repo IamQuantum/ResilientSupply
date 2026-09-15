@@ -30,6 +30,61 @@ interface KnownHub {
 
 const KNOWN_HUBS: KnownHub[] = [
   {
+    keywords: ['kharar', 'landran', 'kurali', 'desu majra', 'sunny enclave', 'chandigarh university', 'gharuan'],
+    pincodePrefixes: ['140'],
+    name: 'Kharar Central Logistics Park',
+    city: 'Kharar',
+    state: 'Punjab',
+    lat: 30.7456,
+    lng: 76.6465,
+    x: 610,
+    y: 55
+  },
+  {
+    keywords: ['ludhiana', 'focal point', 'sahnewal', 'doraha', 'khanna', 'gill road'],
+    pincodePrefixes: ['141'],
+    name: 'Ludhiana Focal Point Industrial Hub',
+    city: 'Ludhiana',
+    state: 'Punjab',
+    lat: 30.9010,
+    lng: 75.8573,
+    x: 580,
+    y: 50
+  },
+  {
+    keywords: ['chandigarh', 'mohali', 'panchkula', 'aerocity', 'jlpl', 'derabassi', 'zirakpur'],
+    pincodePrefixes: ['160'],
+    name: 'Chandigarh / Mohali Logistics Hub',
+    city: 'Mohali / Chandigarh',
+    state: 'Punjab / Chandigarh',
+    lat: 30.6820,
+    lng: 76.7350,
+    x: 620,
+    y: 60
+  },
+  {
+    keywords: ['baddi', 'barotiwala', 'nalagarh', 'solan', 'siswan'],
+    pincodePrefixes: ['173'],
+    name: 'Baddi Pharma Freight Gateway',
+    city: 'Baddi',
+    state: 'Himachal Pradesh',
+    lat: 30.9578,
+    lng: 76.7914,
+    x: 625,
+    y: 45
+  },
+  {
+    keywords: ['ambala', 'shambhu', 'rajpura', 'cantt', 'kurukshetra', 'karnal'],
+    pincodePrefixes: ['133', '134', '132'],
+    name: 'Ambala GT Road Transit Junction',
+    city: 'Ambala Cantt',
+    state: 'Haryana',
+    lat: 30.3782,
+    lng: 76.7767,
+    x: 630,
+    y: 70
+  },
+  {
     keywords: ['bhiwandi', 'mumbai', 'thane', 'panvel', 'jnpt', 'nhava sheva', 'navi mumbai', 'bombay', 'kurla', 'andheri'],
     pincodePrefixes: ['400', '401', '410', '421'],
     name: 'Mumbai / Bhiwandi Logistics Corridor',
@@ -42,7 +97,7 @@ const KNOWN_HUBS: KnownHub[] = [
   },
   {
     keywords: ['pune', 'chakan', 'talegaon', 'bhosari', 'pimpri', 'chinchwad', 'hadapsar', 'ranjangaon'],
-    pincodePrefixes: ['411', '412', '410'],
+    pincodePrefixes: ['411', '412'],
     name: 'Pune / Chakan Industrial Belt',
     city: 'Pune',
     state: 'Maharashtra',
@@ -52,114 +107,15 @@ const KNOWN_HUBS: KnownHub[] = [
     y: 410
   },
   {
-    keywords: ['bengaluru', 'bangalore', 'peenya', 'whitefield', 'devanahalli', 'electronic city', 'bommasandra', 'hosur', 'bidadi'],
-    pincodePrefixes: ['560', '561', '562', '635'],
-    name: 'Bengaluru Industrial & Aerospace Hub',
-    city: 'Bengaluru',
-    state: 'Karnataka',
-    lat: 13.0285,
-    lng: 77.5197,
-    x: 340,
-    y: 450
-  },
-  {
-    keywords: ['hyderabad', 'shamshabad', 'secunderabad', 'medchal', 'patancheru', 'cyberabad', 'hitec', 'gachibowli', 'cherlapally'],
-    pincodePrefixes: ['500', '501', '502'],
-    name: 'Hyderabad Aerospace & Spares SEZ',
-    city: 'Hyderabad',
-    state: 'Telangana',
-    lat: 17.3850,
-    lng: 78.4867,
-    x: 430,
-    y: 380
-  },
-  {
-    keywords: ['chennai', 'madras', 'sriperumbudur', 'oragadam', 'ennore', 'ambattur', 'guindy', 'maraimalai'],
-    pincodePrefixes: ['600', '601', '602', '603'],
-    name: 'Chennai Port & Automotive Corridor',
-    city: 'Chennai',
-    state: 'Tamil Nadu',
-    lat: 13.0827,
-    lng: 80.2707,
-    x: 460,
-    y: 450
-  },
-  {
-    keywords: ['delhi', 'gurugram', 'gurgaon', 'noida', 'greater noida', 'sonipat', 'kundli', 'manesar', 'bilaspur', 'faridabad', 'ghaziabad', 'ncr', 'bawal'],
+    keywords: ['delhi', 'gurugram', 'gurgaon', 'noida', 'greater noida', 'sonipat', 'kundli', 'manesar', 'bilaspur', 'faridabad', 'ghaziabad', 'ncr', 'panipat'],
     pincodePrefixes: ['110', '121', '122', '201', '131'],
     name: 'Delhi NCR Logistics & Fulfilment Hub',
-    city: 'Gurugram / Delhi NCR',
-    state: 'Haryana / Delhi',
-    lat: 28.6139,
-    lng: 77.2090,
+    city: 'Kundli / Delhi NCR',
+    state: 'Delhi / Haryana',
+    lat: 28.8700,
+    lng: 77.1200,
     x: 680,
     y: 90
-  },
-  {
-    keywords: ['ahmedabad', 'sanand', 'changodar', 'mundra', 'kandla', 'gandhinagar', 'morbi', 'kheda', 'mehsana'],
-    pincodePrefixes: ['380', '382', '370'],
-    name: 'Ahmedabad / Sanand Manufacturing Hub',
-    city: 'Ahmedabad',
-    state: 'Gujarat',
-    lat: 23.0225,
-    lng: 72.5714,
-    x: 270,
-    y: 170
-  },
-  {
-    keywords: ['surat', 'bharuch', 'hazira', 'dahej', 'ankleshwar', 'vapi', 'valsad', 'navsari'],
-    pincodePrefixes: ['395', '392', '393', '396'],
-    name: 'Surat-Bharuch Industrial Arterial',
-    city: 'Surat / Bharuch',
-    state: 'Gujarat',
-    lat: 21.1702,
-    lng: 72.8311,
-    x: 280,
-    y: 260
-  },
-  {
-    keywords: ['indore', 'pithampur', 'dewas', 'ujjain', 'bhopal'],
-    pincodePrefixes: ['452', '453', '454', '462'],
-    name: 'Indore Bypass & Central Hub',
-    city: 'Indore',
-    state: 'Madhya Pradesh',
-    lat: 22.7196,
-    lng: 75.8577,
-    x: 480,
-    y: 270
-  },
-  {
-    keywords: ['kolkata', 'calcutta', 'haldia', 'dankuni', 'howrah', 'kharagpur'],
-    pincodePrefixes: ['700', '711', '712', '721'],
-    name: 'Kolkata & Eastern Port Gate',
-    city: 'Kolkata',
-    state: 'West Bengal',
-    lat: 22.5726,
-    lng: 88.3639,
-    x: 720,
-    y: 270
-  },
-  {
-    keywords: ['jaipur', 'neemrana', 'bhiwadi', 'alwar', 'ajmer', 'sitapura'],
-    pincodePrefixes: ['302', '301', '303', '305'],
-    name: 'Jaipur & Neemrana Industrial Zone',
-    city: 'Jaipur',
-    state: 'Rajasthan',
-    lat: 26.9124,
-    lng: 75.7873,
-    x: 520,
-    y: 150
-  },
-  {
-    keywords: ['chandigarh', 'baddi', 'kharar', 'ludhiana', 'mohali', 'jalandhar', 'ambala', 'derabassi'],
-    pincodePrefixes: ['160', '140', '141', '173', '133'],
-    name: 'Chandigarh / Baddi Logistics Gateway',
-    city: 'Chandigarh / Mohali',
-    state: 'Punjab / Haryana / HP',
-    lat: 30.7333,
-    lng: 76.7794,
-    x: 620,
-    y: 60
   },
   {
     keywords: ['nagpur', 'butibori', 'wardha', 'vidarbha', 'mihan'],

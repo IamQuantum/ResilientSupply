@@ -10,9 +10,9 @@ from typing import List, Dict, Any
 SLA_POLICY_DOCUMENTS = [
     {
         "id": "SLA-TATA-01",
-        "customer": "Tata Motors Assembly Plants (Pune / Pantnagar)",
+        "customer": "Tata Motors & OEM Assembly Plants (Ludhiana / Pantnagar)",
         "cargo_type": "Automotive Tier-1 Assemblies & Powertrain",
-        "corridor": "Western Freight Corridor (NH-48 / Pune-NCR)",
+        "corridor": "Northern Freight Corridor (NH-44 / Kharar-NCR)",
         "clause": "Clause 8.4: Just-In-Time delivery mandatory. Late arrivals exceeding 24h incur penalty of ₹50,000 per delayed consignment per day. Rerouting via approved expressway corridors permitted.",
         "cold_chain_required": False,
         "max_delay_hours": 24,
@@ -20,9 +20,9 @@ SLA_POLICY_DOCUMENTS = [
     },
     {
         "id": "SLA-PHARMA-02",
-        "customer": "Sun Pharma / Cipla Distribution Network",
+        "customer": "Sun Pharma / Cipla Distribution Network (Baddi / Kharar)",
         "cargo_type": "Temperature-Controlled Biologics & Vaccines",
-        "corridor": "Bhiwandi to Delhi NCR Medical Depot",
+        "corridor": "Baddi / Kharar to Delhi NCR Medical Depot",
         "clause": "Clause 14.2: Strict Cold-Chain Mandate. Reefer temperature must remain between 2°C and 8°C throughout transit with active telematics logging. Dispatch via non-refrigerated road routes is strictly breach of contract.",
         "cold_chain_required": True,
         "max_delay_hours": 36,
@@ -30,10 +30,10 @@ SLA_POLICY_DOCUMENTS = [
     },
     {
         "id": "SLA-RELIANCE-03",
-        "customer": "Reliance Retail Fulfilment (Western Hubs)",
+        "customer": "Reliance Retail Fulfilment (Northern Hubs)",
         "cargo_type": "FMCG, Dry Groceries & Consumer Electronics",
-        "corridor": "Pan-India National Highways",
-        "clause": "Clause 19.1: Economical transit favored over premium air dispatch. Grace window of 72 hours allowed for monsoon delays before liquidated damages apply.",
+        "corridor": "Punjab & Haryana National Highways",
+        "clause": "Clause 19.1: Economical transit favored over premium air dispatch. Grace window of 72 hours allowed for seasonal delays before liquidated damages apply.",
         "cold_chain_required": False,
         "max_delay_hours": 72,
         "penalty_per_day_inr": 15000
@@ -42,7 +42,7 @@ SLA_POLICY_DOCUMENTS = [
         "id": "REG-NHAI-GST-04",
         "customer": "Interstate Freight Compliance & Tax Authority",
         "cargo_type": "All Commercial Road Freight",
-        "corridor": "National Highways (NH-48, NH-66, NH-52)",
+        "corridor": "National Highways (NH-44, NH-5, NH-152D)",
         "clause": "Statutory Mandate: All commercial consignments exceeding ₹50,000 value must maintain valid GST e-Way Bill with RFID toll integration. Emergency reroute requires automated route update on GST portal within 8 hours.",
         "cold_chain_required": False,
         "max_delay_hours": 999,

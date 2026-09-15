@@ -76,7 +76,7 @@ class DispatchEngine:
 
         qr_payload = (
             f"EWB:{eway_bill_no}|GEN_DATE:{now_formatted}|SUPPLY:OUTWARD_RECOVERY|"
-            f"FROM_GSTIN:27AAACT0000A1Z5|TO_GSTIN:24AAACS1111B1Z9|VALUE:{total_value}|"
+            f"FROM_GSTIN:03AAACT0000A1Z5|TO_GSTIN:06AAACS1111B1Z9|VALUE:{total_value}|"
             f"VEHICLE:{assigned_vehicle}|LR:{lr_awb}|HASH:0x{hash_digest[:16]}"
         )
 
@@ -95,12 +95,12 @@ class DispatchEngine:
                 eway_bill_no=eway_bill_no,
                 eway_bill_date=now_formatted,
                 valid_until=valid_formatted,
-                consignor_name="Tata Motors Tier-1 Hub / Bhiwandi DC (Maharashtra)",
-                consignor_gstin="27AAACT0000A1Z5",
-                consignee_name="Tata Motors Sanand Plant & NCR Hub (Gujarat)",
-                consignee_gstin="24AAACS1111B1Z9",
-                origin_pincode="421302",
-                dest_pincode="382110",
+                consignor_name="Northern Logistics Hub / Kharar Central DC (Punjab)",
+                consignor_gstin="03AAACT0000A1Z5",
+                consignee_name="Delhi NCR Regional Fulfilment Center (Kundli / Sonipat)",
+                consignee_gstin="06AAACS1111B1Z9",
+                origin_pincode="140301",
+                dest_pincode="131028",
                 hsn_code=hsn_code,
                 item_description=item_desc,
                 invoice_value_inr=total_value,
@@ -108,7 +108,7 @@ class DispatchEngine:
                 carrier_transporter_id=carrier_info["transporterId"],
                 vehicle_no=assigned_vehicle,
                 lr_awb_no=lr_awb,
-                route_corridor="R3 (Pune-Indore-Delhi Bypass Corridor via NH-52)",
+                route_corridor="R3 (Kharar-Banur-Tepla Bypass via NH-152D/NH-44)",
                 sap_doc_id=sap_doc,
                 sap_status="COMMITTED_TO_SAP_S4HANA",
                 qr_data=qr_payload
@@ -143,16 +143,16 @@ class DispatchEngine:
                 "consignor": {
                     "legalName": record.consignor_name,
                     "gstin": record.consignor_gstin,
-                    "address": "Building B4, Allcargo Logistics Park, Bhiwandi",
+                    "address": "Plot 42, NH-205A Logistics Belt, Kharar",
                     "pincode": record.origin_pincode,
-                    "state": "27 - Maharashtra"
+                    "state": "03 - Punjab"
                 },
                 "consignee": {
                     "legalName": record.consignee_name,
                     "gstin": record.consignee_gstin,
-                    "address": "Plot 12-B, GIDC Industrial Estate, Sanand",
+                    "address": "Kundli Industrial Area, Phase 4, Sonipat / NCR",
                     "pincode": record.dest_pincode,
-                    "state": "24 - Gujarat"
+                    "state": "06 - Haryana"
                 },
                 "goods": {
                     "hsnCode": record.hsn_code,

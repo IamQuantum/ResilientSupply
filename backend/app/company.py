@@ -22,17 +22,19 @@ class CompanyEngine:
         if not demo_org:
             demo_org = Organization(
                 id=DEMO_ORG_ID,
-                name="Tata Motors CV (Western Corridor Benchmark)",
-                industry="Automotive OEM & Commercial Vehicles",
-                gstin="27AAACT0000A1Z5",
-                headquarters="Pune / Mumbai, Maharashtra",
+                name="Northern Freight Corridor Benchmark (Kharar / Punjab)",
+                industry="Automotive OEM & Industrial Logistics",
+                gstin="03AAACT0000A1Z5",
+                headquarters="Kharar / Chandigarh, Punjab",
                 is_demo=True,
                 is_active=True
             )
             db.add(demo_org)
             db.commit()
         else:
-            demo_org.name = "Tata Motors CV (Western Corridor Benchmark)"
+            demo_org.name = "Northern Freight Corridor Benchmark (Kharar / Punjab)"
+            demo_org.headquarters = "Kharar / Chandigarh, Punjab"
+            demo_org.gstin = "03AAACT0000A1Z5"
             demo_org.is_demo = True
             db.commit()
 
@@ -113,13 +115,134 @@ class CompanyEngine:
         # Benchmark Supply Chain Nodes if missing
         if not db.query(UserSupplyChainNode).filter(UserSupplyChainNode.org_id == DEMO_ORG_ID).first():
             demo_nodes = [
-                UserSupplyChainNode(id="node-w1", org_id=DEMO_ORG_ID, name="Bhiwandi Central DC", city="Mumbai Bhiwandi", pincode="421302", capacity_units=12000, safety_buffer_pct=25, status="Available"),
-                UserSupplyChainNode(id="node-w2", org_id=DEMO_ORG_ID, name="Pune Chakan DC", city="Pune Chakan", pincode="410501", capacity_units=8500, safety_buffer_pct=40, status="Available"),
-                UserSupplyChainNode(id="node-w3", org_id=DEMO_ORG_ID, name="Ahmedabad Sanand Hub", city="Ahmedabad Sanand", pincode="382110", capacity_units=6000, safety_buffer_pct=15, status="Critical"),
-                UserSupplyChainNode(id="node-w4", org_id=DEMO_ORG_ID, name="Indore Outer Hub", city="Indore", pincode="452010", capacity_units=5000, safety_buffer_pct=30, status="Available")
+                UserSupplyChainNode(
+                    id="node-w1",
+                    org_id=DEMO_ORG_ID,
+                    name="Kharar Central DC",
+                    city="Kharar, Punjab",
+                    pincode="140301",
+                    address="NH-205A Logistics Belt, Kharar, Punjab 140301",
+                    lat=30.7456,
+                    lng=76.6465,
+                    capacity_units=15000,
+                    safety_buffer_pct=25,
+                    status="Critical"
+                ),
+                UserSupplyChainNode(
+                    id="node-w2",
+                    org_id=DEMO_ORG_ID,
+                    name="Mohali / Chandigarh Hub",
+                    city="Mohali, Punjab",
+                    pincode="160071",
+                    address="Sector 82 JLPL Logistics Park, Mohali 160071",
+                    lat=30.6820,
+                    lng=76.7350,
+                    capacity_units=12000,
+                    safety_buffer_pct=40,
+                    status="Available"
+                ),
+                UserSupplyChainNode(
+                    id="node-w3",
+                    org_id=DEMO_ORG_ID,
+                    name="Ludhiana Focal Point DC",
+                    city="Ludhiana, Punjab",
+                    pincode="141010",
+                    address="Focal Point Phase VIII, Ludhiana 141010",
+                    lat=30.9010,
+                    lng=75.8573,
+                    capacity_units=14000,
+                    safety_buffer_pct=35,
+                    status="Available"
+                ),
+                UserSupplyChainNode(
+                    id="node-w4",
+                    org_id=DEMO_ORG_ID,
+                    name="Delhi NCR Fulfilment Hub",
+                    city="Delhi NCR (Kundli)",
+                    pincode="131028",
+                    address="Kundli Industrial Area, Sonipat / Delhi NCR 131028",
+                    lat=28.8700,
+                    lng=77.1200,
+                    capacity_units=25000,
+                    safety_buffer_pct=30,
+                    status="Available"
+                ),
+                UserSupplyChainNode(
+                    id="node-w5",
+                    org_id=DEMO_ORG_ID,
+                    name="Baddi Pharma Gateway",
+                    city="Baddi, HP",
+                    pincode="173205",
+                    address="Baddi Industrial Estate, Solan District, HP 173205",
+                    lat=30.9578,
+                    lng=76.7914,
+                    capacity_units=8000,
+                    safety_buffer_pct=20,
+                    status="Available"
+                )
             ]
             for n in demo_nodes:
                 db.add(n)
+            db.commit()
+
+        # Benchmark Supply Chain Routes if missing
+        if not db.query(UserSupplyChainRoute).filter(UserSupplyChainRoute.org_id == DEMO_ORG_ID).first():
+            demo_routes = [
+                UserSupplyChainRoute(
+                    id="route-r1",
+                    org_id=DEMO_ORG_ID,
+                    route_code="R1-NH44",
+                    origin_node="Kharar Central DC",
+                    destination_node="Delhi NCR Fulfilment Hub",
+                    origin_address="NH-205A Logistics Belt, Kharar, Punjab 140301",
+                    destination_address="Kundli Industrial Area, Sonipat / Delhi NCR 131028",
+                    distance_km=260,
+                    transit_hours=5,
+                    primary_carrier="TCI Express Northern Fleet",
+                    status="Blocked"
+                ),
+                UserSupplyChainRoute(
+                    id="route-r2",
+                    org_id=DEMO_ORG_ID,
+                    route_code="R2-NH5",
+                    origin_node="Kharar Central DC",
+                    destination_node="Ludhiana Focal Point DC",
+                    origin_address="NH-205A Logistics Belt, Kharar, Punjab 140301",
+                    destination_address="Focal Point Phase VIII, Ludhiana, Punjab 141010",
+                    distance_km=95,
+                    transit_hours=2,
+                    primary_carrier="VRL Surface Logistics Punjab",
+                    status="Optimal"
+                ),
+                UserSupplyChainRoute(
+                    id="route-r3",
+                    org_id=DEMO_ORG_ID,
+                    route_code="R3-BYPASS",
+                    origin_node="Mohali / Chandigarh Hub",
+                    destination_node="Delhi NCR Fulfilment Hub",
+                    origin_address="Sector 82 JLPL Logistics Park, Mohali 160071",
+                    destination_address="Kundli Industrial Area, Sonipat / Delhi NCR 131028",
+                    distance_km=285,
+                    transit_hours=6,
+                    primary_carrier="Allcargo Logistics Northern Fleet",
+                    status="Optimal"
+                ),
+                UserSupplyChainRoute(
+                    id="route-r4",
+                    org_id=DEMO_ORG_ID,
+                    route_code="R4-BADDI",
+                    origin_node="Kharar Central DC",
+                    destination_node="Baddi Pharma Gateway",
+                    origin_address="NH-205A Logistics Belt, Kharar, Punjab 140301",
+                    destination_address="Baddi Industrial Estate, Solan District, HP 173205",
+                    distance_km=45,
+                    transit_hours=2,
+                    primary_carrier="Gati KWE Reefer Logistics",
+                    status="Optimal"
+                )
+            ]
+            for r in demo_routes:
+                db.add(r)
             db.commit()
 
     def authenticate_user(self, db: Session, email: str, password: Optional[str] = None) -> Optional[Dict[str, Any]]:

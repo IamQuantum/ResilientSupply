@@ -49,7 +49,7 @@ company_engine = CompanyEngine()
 
 class OptimizationRequest(BaseModel):
     disruptionId: str = "D-001"
-    routeBlocked: str = "R1 (NH-48)"
+    routeBlocked: str = "R1 (NH-44)"
     orgId: Optional[str] = None
     customParams: Optional[Dict[str, Any]] = None
     weights: Optional[Dict[str, float]] = {
