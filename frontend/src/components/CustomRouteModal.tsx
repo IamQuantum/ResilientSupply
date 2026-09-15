@@ -228,9 +228,15 @@ export const CustomRouteModal: React.FC<CustomRouteModalProps> = ({
         attributionControl: false
       });
 
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+      const cartoKey = (import.meta as any).env?.VITE_CARTO_API_KEY;
+      const tileUrl = cartoKey
+        ? `https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png?key=${cartoKey}`
+        : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+
+      L.tileLayer(tileUrl, {
         maxZoom: 19,
-        subdomains: 'abcd'
+        subdomains: cartoKey ? 'abcd' : 'abc',
+        attribution: cartoKey ? '&copy; OpenStreetMap, &copy; CARTO' : '&copy; OpenStreetMap contributors'
       }).addTo(map);
 
       mapInstanceRef.current = map;

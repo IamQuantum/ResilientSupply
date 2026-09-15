@@ -433,14 +433,29 @@ export const FreightNetworkMap: React.FC<FreightNetworkMapProps> = ({
       map.removeLayer(tileLayerRef.current);
     }
 
-    const tileUrl = tileMode === 'light'
-      ? 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png'
-      : 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
+    const cartoKey = (import.meta as any).env?.VITE_CARTO_API_KEY;
 
-    const newTileLayer = L.tileLayer(tileUrl, {
-      maxZoom: 19,
-      subdomains: 'abcd'
-    }).addTo(map);
+    let tileUrl = '';
+    let tileOptions: L.TileLayerOptions = {};
+
+    if (cartoKey) {
+      tileUrl = tileMode === 'light'
+        ? `https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png?key=${cartoKey}`
+        : `https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png?key=${cartoKey}`;
+      tileOptions = { maxZoom: 19, subdomains: 'abcd', attribution: '&copy; OpenStreetMap, &copy; CARTO' };
+    } else {
+      if (tileMode === 'dark') {
+        // High-contrast clean dark canvas without API key requirements or watermarks
+        tileUrl = 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}';
+        tileOptions = { maxZoom: 19, maxNativeZoom: 16, attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ' };
+      } else {
+        // High-resolution clean OpenStreetMap tiles without API key requirements or watermarks
+        tileUrl = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+        tileOptions = { maxZoom: 19, subdomains: 'abc', attribution: '&copy; OpenStreetMap contributors' };
+      }
+    }
+
+    const newTileLayer = L.tileLayer(tileUrl, tileOptions).addTo(map);
 
     tileLayerRef.current = newTileLayer;
   }, [tileMode]);

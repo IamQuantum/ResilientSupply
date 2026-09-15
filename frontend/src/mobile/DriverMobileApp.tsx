@@ -487,10 +487,16 @@ export const DriverMobileApp: React.FC<DriverMobileAppProps> = ({
         attributionControl: false
       });
 
-      // CartoDB Voyager Basemap
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+      // Street Basemap (OpenStreetMap with optional CARTO key)
+      const cartoKey = (import.meta as any).env?.VITE_CARTO_API_KEY;
+      const tileUrl = cartoKey
+        ? `https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png?key=${cartoKey}`
+        : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+
+      L.tileLayer(tileUrl, {
         maxZoom: 19,
-        subdomains: 'abcd'
+        subdomains: cartoKey ? 'abcd' : 'abc',
+        attribution: cartoKey ? '&copy; OpenStreetMap, &copy; CARTO' : '&copy; OpenStreetMap contributors'
       }).addTo(map);
 
       // Draw active route polyline
